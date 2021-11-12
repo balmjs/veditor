@@ -1,0 +1,42 @@
+{
+  "name": "veditor",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "balm",
+    "prod": "balm -p",
+    "docs": "balm -p --docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/balmjs/veditor.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/balmjs/veditor/issues"
+  },
+  "devDependencies": {
+    "@babel/runtime-corejs3": "^7.16.0",
+    "axios": "^0.24.0",
+    "babel-plugin-prismjs": "^2.1.0",
+    "balm": "3.20.0",
+    "balm-ui": "^8.46.2",
+    "core-js": "^3.19.1",
+    "eslint": "^8.2.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "6",
+    "html-loader": "1",
+    "markdown-loader": "^6.0.0",
+    "prettier": "^2.4.1",
+    "prismjs": "^1.25.0",
+    "vue": "2",
+    "vue-loader": "15",
+    "vue-router": "3",
+    "vue-template-compiler": "2",
+    "webpack": "4"
+  }
+}
