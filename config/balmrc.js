@@ -9,7 +9,10 @@ function resolve(dir) {
 }
 
 function getConfig(balm) {
+  const useBuild = balm.config.env.isProd && !env.buildDocs;
+
   return {
+    useDefaults: !useBuild,
     roots: {
       source: 'docs'
     },
@@ -17,6 +20,7 @@ function getConfig(balm) {
       extname: 'scss'
     },
     scripts: {
+      eslint: true,
       entry: {
         app: './docs/scripts/index.js'
       },
@@ -38,8 +42,7 @@ function getConfig(balm) {
         vue$: 'vue/dist/vue.esm.js',
         'balm-ui-plus': 'balm-ui/dist/balm-ui-plus.js'
       },
-      plugins: [new VueLoaderPlugin()],
-      eslint: true
+      plugins: [new VueLoaderPlugin()]
     },
     assets: {
       cache: env.buildDocs

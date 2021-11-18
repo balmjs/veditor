@@ -1,10 +1,8 @@
-window.setVEditor({
-  HOME_URL: `/veditor/`
-});
+window.UEDITOR_HOME_URL = '/veditor/';
 
 const loadVEditor = (callback = () => {}) => {
-  import('veditor/config');
-  import('veditor').then(() => {
+  import('../../veditor/veditor.config');
+  import('../../veditor/veditor').then(() => {
     callback(window.UE);
   });
 };
