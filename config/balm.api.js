@@ -27,9 +27,6 @@ module.exports = (mix) => {
       mix.remove('dist/ueditor.css');
     } else {
       mix.copy('node_modules/balm-ui/fonts/*', 'docs/fonts'); // For new fonts updated
-
-      mix.remove('docs/veditor');
-      mix.copy('dist/**/*', 'docs/veditor');
     }
   }
 };
