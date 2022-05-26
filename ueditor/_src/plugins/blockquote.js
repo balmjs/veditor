@@ -1,152 +1,172 @@
 /**
- * B、I、sub、super命令支持
+ * 添加引用
  * @file
  * @since 1.2.6.1
  */
 
-UE.plugins["basestyle"] = function() {
-  /**
-     * 字体加粗
-     * @command bold
-     * @param { String } cmd 命令字符串
-     * @remind 对已加粗的文本内容执行该命令， 将取消加粗
-     * @method execCommand
-     * @example
-     * ```javascript
-     * //editor是编辑器实例
-     * //对当前选中的文本内容执行加粗操作
-     * //第一次执行， 文本内容加粗
-     * editor.execCommand( 'bold' );
-     *
-     * //第二次执行， 文本内容取消加粗
-     * editor.execCommand( 'bold' );
-     * ```
-     */
+/**
+ * 添加引用
+ * @command blockquote
+ * @method execCommand
+ * @param { String } cmd 命令字符串
+ * @example
+ * ```javascript
+ * editor.execCommand( 'blockquote' );
+ * ```
+ */
 
-  /**
-     * 字体倾斜
-     * @command italic
-     * @method execCommand
-     * @param { String } cmd 命令字符串
-     * @remind 对已倾斜的文本内容执行该命令， 将取消倾斜
-     * @example
-     * ```javascript
-     * //editor是编辑器实例
-     * //对当前选中的文本内容执行斜体操作
-     * //第一次操作， 文本内容将变成斜体
-     * editor.execCommand( 'italic' );
-     *
-     * //再次对同一文本内容执行， 则文本内容将恢复正常
-     * editor.execCommand( 'italic' );
-     * ```
-     */
+/**
+ * 添加引用
+ * @command blockquote
+ * @method execCommand
+ * @param { String } cmd 命令字符串
+ * @param { Object } attrs 节点属性
+ * @example
+ * ```javascript
+ * editor.execCommand( 'blockquote',{
+ *     style: "color: red;"
+ * } );
+ * ```
+ */
 
-  /**
-     * 下标文本，与“superscript”命令互斥
-     * @command subscript
-     * @method execCommand
-     * @remind  把选中的文本内容切换成下标文本， 如果当前选中的文本已经是下标， 则该操作会把文本内容还原成正常文本
-     * @param { String } cmd 命令字符串
-     * @example
-     * ```javascript
-     * //editor是编辑器实例
-     * //对当前选中的文本内容执行下标操作
-     * //第一次操作， 文本内容将变成下标文本
-     * editor.execCommand( 'subscript' );
-     *
-     * //再次对同一文本内容执行， 则文本内容将恢复正常
-     * editor.execCommand( 'subscript' );
-     * ```
-     */
 
-  /**
-     * 上标文本，与“subscript”命令互斥
-     * @command superscript
-     * @method execCommand
-     * @remind 把选中的文本内容切换成上标文本， 如果当前选中的文本已经是上标， 则该操作会把文本内容还原成正常文本
-     * @param { String } cmd 命令字符串
-     * @example
-     * ```javascript
-     * //editor是编辑器实例
-     * //对当前选中的文本内容执行上标操作
-     * //第一次操作， 文本内容将变成上标文本
-     * editor.execCommand( 'superscript' );
-     *
-     * //再次对同一文本内容执行， 则文本内容将恢复正常
-     * editor.execCommand( 'superscript' );
-     * ```
-     */
-  var basestyles = {
-    bold: ["strong", "b"],
-    italic: ["em", "i"],
-    subscript: ["sub"],
-    superscript: ["sup"]
-  },
-    getObj = function(editor, tagNames) {
-      return domUtils.filterNodeList(
-        editor.selection.getStartElementPath(),
-        tagNames
-      );
-    },
-    me = this;
-  //添加快捷键
-  me.addshortcutkey({
-    Bold: "ctrl+66", //^B
-    Italic: "ctrl+73", //^I
-    Underline: "ctrl+85" //^U
-  });
-  me.addInputRule(function(root) {
-    utils.each(root.getNodesByTagName("b i"), function(node) {
-      switch (node.tagName) {
-        case "b":
-          node.tagName = "strong";
-          break;
-        case "i":
-          node.tagName = "em";
-      }
-    });
-  });
-  for (var style in basestyles) {
-    (function(cmd, tagNames) {
-      me.commands[cmd] = {
-        execCommand: function(cmdName) {
-          var range = me.selection.getRange(),
-            obj = getObj(this, tagNames);
-          if (range.collapsed) {
-            if (obj) {
-              var tmpText = me.document.createTextNode("");
-              range.insertNode(tmpText).removeInlineStyle(tagNames);
-              range.setStartBefore(tmpText);
-              domUtils.remove(tmpText);
+UE.plugins['blockquote'] = function(){
+    var me = this;
+    function getObj(editor){
+        return domUtils.filterNodeList(editor.selection.getStartElementPath(),'blockquote');
+    }
+    me.commands['blockquote'] = {
+        execCommand : function( cmdName, attrs ) {
+            var range = this.selection.getRange(),
+                obj = getObj(this),
+                blockquote = dtd.blockquote,
+                bookmark = range.createBookmark();
+
+            if ( obj ) {
+
+                    var start = range.startContainer,
+                        startBlock = domUtils.isBlockElm(start) ? start : domUtils.findParent(start,function(node){return domUtils.isBlockElm(node)}),
+
+                        end = range.endContainer,
+                        endBlock = domUtils.isBlockElm(end) ? end :  domUtils.findParent(end,function(node){return domUtils.isBlockElm(node)});
+
+                    //处理一下li
+                    startBlock = domUtils.findParentByTagName(startBlock,'li',true) || startBlock;
+                    endBlock = domUtils.findParentByTagName(endBlock,'li',true) || endBlock;
+
+
+                    if(startBlock.tagName == 'LI' || startBlock.tagName == 'TD' || startBlock === obj || domUtils.isBody(startBlock)){
+                        domUtils.remove(obj,true);
+                    }else{
+                        domUtils.breakParent(startBlock,obj);
+                    }
+
+                    if(startBlock !== endBlock){
+                        obj = domUtils.findParentByTagName(endBlock,'blockquote');
+                        if(obj){
+                            if(endBlock.tagName == 'LI' || endBlock.tagName == 'TD'|| domUtils.isBody(endBlock)){
+                                obj.parentNode && domUtils.remove(obj,true);
+                            }else{
+                                domUtils.breakParent(endBlock,obj);
+                            }
+
+                        }
+                    }
+
+                    var blockquotes = domUtils.getElementsByTagName(this.document,'blockquote');
+                    for(var i=0,bi;bi=blockquotes[i++];){
+                        if(!bi.childNodes.length){
+                            domUtils.remove(bi);
+                        }else if(domUtils.getPosition(bi,startBlock)&domUtils.POSITION_FOLLOWING && domUtils.getPosition(bi,endBlock)&domUtils.POSITION_PRECEDING){
+                            domUtils.remove(bi,true);
+                        }
+                    }
+
+
+
+
             } else {
-              var tmpNode = range.document.createElement(tagNames[0]);
-              if (cmdName == "superscript" || cmdName == "subscript") {
-                tmpText = me.document.createTextNode("");
-                range
-                  .insertNode(tmpText)
-                  .removeInlineStyle(["sub", "sup"])
-                  .setStartBefore(tmpText)
-                  .collapse(true);
-              }
-              range.insertNode(tmpNode).setStart(tmpNode, 0);
+
+                var tmpRange = range.cloneRange(),
+                    node = tmpRange.startContainer.nodeType == 1 ? tmpRange.startContainer : tmpRange.startContainer.parentNode,
+                    preNode = node,
+                    doEnd = 1;
+
+                //调整开始
+                while ( 1 ) {
+                    if ( domUtils.isBody(node) ) {
+                        if ( preNode !== node ) {
+                            if ( range.collapsed ) {
+                                tmpRange.selectNode( preNode );
+                                doEnd = 0;
+                            } else {
+                                tmpRange.setStartBefore( preNode );
+                            }
+                        }else{
+                            tmpRange.setStart(node,0);
+                        }
+
+                        break;
+                    }
+                    if ( !blockquote[node.tagName] ) {
+                        if ( range.collapsed ) {
+                            tmpRange.selectNode( preNode );
+                        } else{
+                            tmpRange.setStartBefore( preNode);
+                        }
+                        break;
+                    }
+
+                    preNode = node;
+                    node = node.parentNode;
+                }
+
+                //调整结束
+                if ( doEnd ) {
+                    preNode = node =  node = tmpRange.endContainer.nodeType == 1 ? tmpRange.endContainer : tmpRange.endContainer.parentNode;
+                    while ( 1 ) {
+
+                        if ( domUtils.isBody( node ) ) {
+                            if ( preNode !== node ) {
+
+                                tmpRange.setEndAfter( preNode );
+
+                            } else {
+                                tmpRange.setEnd( node, node.childNodes.length );
+                            }
+
+                            break;
+                        }
+                        if ( !blockquote[node.tagName] ) {
+                            tmpRange.setEndAfter( preNode );
+                            break;
+                        }
+
+                        preNode = node;
+                        node = node.parentNode;
+                    }
+
+                }
+
+
+                node = range.document.createElement( 'blockquote' );
+                domUtils.setAttributes( node, attrs );
+                node.appendChild( tmpRange.extractContents() );
+                tmpRange.insertNode( node );
+                //去除重复的
+                var childs = domUtils.getElementsByTagName(node,'blockquote');
+                for(var i=0,ci;ci=childs[i++];){
+                    if(ci.parentNode){
+                        domUtils.remove(ci,true);
+                    }
+                }
+
             }
-            range.collapse(true);
-          } else {
-            if (cmdName == "superscript" || cmdName == "subscript") {
-              if (!obj || obj.tagName.toLowerCase() != cmdName) {
-                range.removeInlineStyle(["sub", "sup"]);
-              }
-            }
-            obj
-              ? range.removeInlineStyle(tagNames)
-              : range.applyInlineStyle(tagNames[0]);
-          }
-          range.select();
+            range.moveToBookmark( bookmark ).select();
         },
-        queryCommandState: function() {
-          return getObj(this, tagNames) ? 1 : 0;
+        queryCommandState : function() {
+            return getObj(this) ? 1 : 0;
         }
-      };
-    })(style, basestyles[style]);
-  }
+    };
 };
+

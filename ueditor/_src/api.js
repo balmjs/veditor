@@ -1,67 +1,62 @@
-UE.registerUI("message", function(editor) {
-  var editorui = baidu.editor.ui;
-  var Message = editorui.Message;
-  var holder;
-  var _messageItems = [];
-  var me = editor;
+/**
+ * 该文件定义了API文档所使用到的本地函数的说明
+ * @file
+ * @module Native
+ */
 
-  me.setOpt("enableMessageShow", true);
-  if (me.getOpt("enableMessageShow") === false) {
-    return;
-  }
+/**
+ * 辅助接口说明
+ * @module Native
+ * @unfile
+ */
 
-  me.addListener("ready", function() {
-    holder = document.getElementById(me.ui.id + "_message_holder");
-    updateHolderPos();
-    setTimeout(function() {
-      updateHolderPos();
-    }, 500);
-  });
+/**
+ * 原生String对象， 字符串
+ * @class String
+ */
 
-  me.addListener("showmessage", function(type, opt) {
-    opt = utils.isString(opt)
-      ? {
-          content: opt
-        }
-      : opt;
-    var message = new Message({
-      timeout: opt.timeout,
-      type: opt.type,
-      content: opt.content,
-      keepshow: opt.keepshow,
-      editor: me
-    }),
-      mid = opt.id || "msg_" + (+new Date()).toString(36);
-    message.render(holder);
-    _messageItems[mid] = message;
-    message.reset(opt);
-    updateHolderPos();
-    return mid;
-  });
+/**
+ * 原生Function对象， 函数
+ * @class Function
+ */
 
-  me.addListener("updatemessage", function(type, id, opt) {
-    opt = utils.isString(opt)
-      ? {
-          content: opt
-        }
-      : opt;
-    var message = _messageItems[id];
-    message.render(holder);
-    message && message.reset(opt);
-  });
+/**
+ * 原生Object对象， 普通对象
+ * @remind 如果某一方法的参数类型为Object时， 表示该参数应该接受一个key-value集合
+ * @class Object
+ */
 
-  me.addListener("hidemessage", function(type, id) {
-    var message = _messageItems[id];
-    message && message.hide();
-  });
+/**
+ * 原生Boolean对象， 布尔值
+ * @class Boolean
+ */
 
-  function updateHolderPos() {
-    if (!holder || !me.ui) return;
-    var toolbarbox = me.ui.getDom("toolbarbox");
-    if (toolbarbox) {
-      holder.style.top = toolbarbox.offsetHeight + 3 + "px";
-    }
-    holder.style.zIndex =
-      Math.max(me.options.zIndex, me.iframe.style.zIndex) + 1;
-  }
-});
+/**
+ * 原生Number对象， 数值
+ * @class Number
+ */
+
+/**
+ * 原生NULL对象， 空
+ * @class NULL
+ */
+
+/**
+ * 原生Array对象， 数组
+ * @class Array
+ */
+
+/**
+ * 浏览器Node， dom节点
+ * @class Node
+ */
+
+/**
+ * 浏览器Element， dom元素
+ * @class Element
+ */
+
+/**
+ * UEditor模拟dom节点对象
+ * @class uNode
+ */

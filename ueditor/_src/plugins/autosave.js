@@ -1,218 +1,129 @@
-///import core
-///commands 为非ie浏览器自动添加a标签
-///commandsName  AutoLink
-///commandsTitle  自动增加链接
-/**
- * @description 为非ie浏览器自动添加a标签
- * @author zhanyi
- */
+UE.plugin.register('autosave', function (){
 
-UE.plugin.register(
-  "autolink",
-  function() {
-    var cont = 0;
+    var me = this,
+        //无限循环保护
+        lastSaveTime = new Date(),
+        //最小保存间隔时间
+        MIN_TIME = 20,
+        //auto save key
+        saveKey = null;
 
-    return !browser.ie
-      ? {
-          bindEvents: {
-            reset: function() {
-              cont = 0;
-            },
-            keydown: function(type, evt) {
-              var me = this;
-              var keyCode = evt.keyCode || evt.which;
+    function save ( editor ) {
 
-              if (keyCode == 32 || keyCode == 13) {
-                var sel = me.selection.getNative(),
-                  range = sel.getRangeAt(0).cloneRange(),
-                  offset,
-                  charCode;
+        var saveData;
 
-                var start = range.startContainer;
-                while (start.nodeType == 1 && range.startOffset > 0) {
-                  start =
-                    range.startContainer.childNodes[range.startOffset - 1];
-                  if (!start) {
-                    break;
-                  }
-                  range.setStart(
-                    start,
-                    start.nodeType == 1
-                      ? start.childNodes.length
-                      : start.nodeValue.length
-                  );
-                  range.collapse(true);
-                  start = range.startContainer;
-                }
-
-                do {
-                  if (range.startOffset == 0) {
-                    start = range.startContainer.previousSibling;
-
-                    while (start && start.nodeType == 1) {
-                      start = start.lastChild;
-                    }
-                    if (!start || domUtils.isFillChar(start)) {
-                      break;
-                    }
-                    offset = start.nodeValue.length;
-                  } else {
-                    start = range.startContainer;
-                    offset = range.startOffset;
-                  }
-                  range.setStart(start, offset - 1);
-                  charCode = range.toString().charCodeAt(0);
-                } while (charCode != 160 && charCode != 32);
-
-                if (
-                  range
-                    .toString()
-                    .replace(new RegExp(domUtils.fillChar, "g"), "")
-                    .match(/(?:https?:\/\/|ssh:\/\/|ftp:\/\/|file:\/|www\.)/i)
-                ) {
-                  while (range.toString().length) {
-                    if (
-                      /^(?:https?:\/\/|ssh:\/\/|ftp:\/\/|file:\/|www\.)/i.test(
-                        range.toString()
-                      )
-                    ) {
-                      break;
-                    }
-                    try {
-                      range.setStart(
-                        range.startContainer,
-                        range.startOffset + 1
-                      );
-                    } catch (e) {
-                      //trace:2121
-                      var start = range.startContainer;
-                      while (!(next = start.nextSibling)) {
-                        if (domUtils.isBody(start)) {
-                          return;
-                        }
-                        start = start.parentNode;
-                      }
-                      range.setStart(next, 0);
-                    }
-                  }
-                  //range的开始边界已经在a标签里的不再处理
-                  if (
-                    domUtils.findParentByTagName(
-                      range.startContainer,
-                      "a",
-                      true
-                    )
-                  ) {
-                    return;
-                  }
-                  var a = me.document.createElement("a"),
-                    text = me.document.createTextNode(" "),
-                    href;
-
-                  me.undoManger && me.undoManger.save();
-                  a.appendChild(range.extractContents());
-                  a.href = a.innerHTML = a.innerHTML.replace(/<[^>]+>/g, "");
-                  href = a
-                    .getAttribute("href")
-                    .replace(new RegExp(domUtils.fillChar, "g"), "");
-                  href = /^(?:https?:\/\/)/gi.test(href)
-                    ? href
-                    : "http://" + href;
-                  a.setAttribute("_src", utils.html(href));
-                  a.href = utils.html(href);
-
-                  range.insertNode(a);
-                  a.parentNode.insertBefore(text, a.nextSibling);
-                  range.setStart(text, 0);
-                  range.collapse(true);
-                  sel.removeAllRanges();
-                  sel.addRange(range);
-                  me.undoManger && me.undoManger.save();
-                }
-              }
-            }
-          }
+        if ( new Date() - lastSaveTime < MIN_TIME ) {
+            return;
         }
-      : {};
-  },
-  function() {
-    var keyCodes = {
-      37: 1,
-      38: 1,
-      39: 1,
-      40: 1,
-      13: 1,
-      32: 1
-    };
-    function checkIsCludeLink(node) {
-      if (node.nodeType == 3) {
-        return null;
-      }
-      if (node.nodeName == "A") {
-        return node;
-      }
-      var lastChild = node.lastChild;
 
-      while (lastChild) {
-        if (lastChild.nodeName == "A") {
-          return lastChild;
+        if ( !editor.hasContents() ) {
+            //这里不能调用命令来删除， 会造成事件死循环
+            saveKey && me.removePreferences( saveKey );
+            return;
         }
-        if (lastChild.nodeType == 3) {
-          if (domUtils.isWhitespace(lastChild)) {
-            lastChild = lastChild.previousSibling;
-            continue;
-          }
-          return null;
+
+        lastSaveTime = new Date();
+
+        editor._saveFlag = null;
+
+        saveData = me.body.innerHTML;
+
+        if ( editor.fireEvent( "beforeautosave", {
+            content: saveData
+        } ) === false ) {
+            return;
         }
-        lastChild = lastChild.lastChild;
-      }
+
+        me.setPreferences( saveKey, saveData );
+
+        editor.fireEvent( "afterautosave", {
+            content: saveData
+        } );
+
     }
-    browser.ie &&
-      this.addListener("keyup", function(cmd, evt) {
-        var me = this,
-          keyCode = evt.keyCode;
-        if (keyCodes[keyCode]) {
-          var rng = me.selection.getRange();
-          var start = rng.startContainer;
 
-          if (keyCode == 13) {
-            while (
-              start &&
-              !domUtils.isBody(start) &&
-              !domUtils.isBlockElm(start)
-            ) {
-              start = start.parentNode;
-            }
-            if (start && !domUtils.isBody(start) && start.nodeName == "P") {
-              var pre = start.previousSibling;
-              if (pre && pre.nodeType == 1) {
-                var pre = checkIsCludeLink(pre);
-                if (pre && !pre.getAttribute("_href")) {
-                  domUtils.remove(pre, true);
+    return {
+        defaultOptions: {
+            //默认间隔时间
+            saveInterval: 500
+        },
+        bindEvents:{
+            'ready':function(){
+
+                var _suffix = "-drafts-data",
+                    key = null;
+
+                if ( me.key ) {
+                    key = me.key + _suffix;
+                } else {
+                    key = ( me.container.parentNode.id || 'ue-common' ) + _suffix;
                 }
-              }
-            }
-          } else if (keyCode == 32) {
-            if (start.nodeType == 3 && /^\s$/.test(start.nodeValue)) {
-              start = start.previousSibling;
-              if (
-                start &&
-                start.nodeName == "A" &&
-                !start.getAttribute("_href")
-              ) {
-                domUtils.remove(start, true);
-              }
-            }
-          } else {
-            start = domUtils.findParentByTagName(start, "a", true);
-            if (start && !start.getAttribute("_href")) {
-              var bk = rng.createBookmark();
 
-              domUtils.remove(start, true);
-              rng.moveToBookmark(bk).select(true);
+                //页面地址+编辑器ID 保持唯一
+                saveKey = ( location.protocol + location.host + location.pathname ).replace( /[.:\/]/g, '_' ) + key;
+
+            },
+
+            'contentchange': function () {
+
+                if ( !saveKey ) {
+                    return;
+                }
+
+                if ( me._saveFlag ) {
+                    window.clearTimeout( me._saveFlag );
+                }
+
+                if ( me.options.saveInterval > 0 ) {
+
+                    me._saveFlag = window.setTimeout( function () {
+
+                        save( me );
+
+                    }, me.options.saveInterval );
+
+                } else {
+
+                    save(me);
+
+                }
+
+
             }
-          }
+        },
+        commands:{
+            'clearlocaldata':{
+                execCommand:function (cmd, name) {
+                    if ( saveKey && me.getPreferences( saveKey ) ) {
+                        me.removePreferences( saveKey )
+                    }
+                },
+                notNeedUndo: true,
+                ignoreContentChange:true
+            },
+
+            'getlocaldata':{
+                execCommand:function (cmd, name) {
+                    return saveKey ? me.getPreferences( saveKey ) || '' : '';
+                },
+                notNeedUndo: true,
+                ignoreContentChange:true
+            },
+
+            'drafts':{
+                execCommand:function (cmd, name) {
+                    if ( saveKey ) {
+                        me.body.innerHTML = me.getPreferences( saveKey ) || '<p>'+domUtils.fillHtml+'</p>';
+                        me.focus(true);
+                    }
+                },
+                queryCommandState: function () {
+                    return saveKey ? ( me.getPreferences( saveKey ) === null ? -1 : 0 ) : -1;
+                },
+                notNeedUndo: true,
+                ignoreContentChange:true
+            }
         }
-      });
-  }
-);
+    }
+
+});

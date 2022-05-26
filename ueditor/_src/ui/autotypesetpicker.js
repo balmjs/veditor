@@ -1,151 +1,66 @@
 ///import core
 ///import uicore
-///import ui/popup.js
-///import ui/autotypesetpicker.js
-///import ui/splitbutton.js
-(function() {
-  var utils = baidu.editor.utils,
-    Popup = baidu.editor.ui.Popup,
-    AutoTypeSetPicker = baidu.editor.ui.AutoTypeSetPicker,
-    SplitButton = baidu.editor.ui.SplitButton,
-    AutoTypeSetButton = (baidu.editor.ui.AutoTypeSetButton = function(options) {
-      this.initOptions(options);
-      this.initAutoTypeSetButton();
-    });
-  function getPara(me) {
-    var opt = {},
-      cont = me.getDom(),
-      editorId = me.editor.uid,
-      inputType = null,
-      attrName = null,
-      ipts = domUtils.getElementsByTagName(cont, "input");
-    for (var i = ipts.length - 1, ipt; (ipt = ipts[i--]); ) {
-      inputType = ipt.getAttribute("type");
-      if (inputType == "checkbox") {
-        attrName = ipt.getAttribute("name");
-        opt[attrName] && delete opt[attrName];
-        if (ipt.checked) {
-          var attrValue = document.getElementById(
-            attrName + "Value" + editorId
-          );
-          if (attrValue) {
-            if (/input/gi.test(attrValue.tagName)) {
-              opt[attrName] = attrValue.value;
-            } else {
-              var iptChilds = attrValue.getElementsByTagName("input");
-              for (
-                var j = iptChilds.length - 1, iptchild;
-                (iptchild = iptChilds[j--]);
+(function () {
+    var utils = baidu.editor.utils,
+        UIBase = baidu.editor.ui.UIBase;
 
-              ) {
-                if (iptchild.checked) {
-                  opt[attrName] = iptchild.value;
-                  break;
-                }
-              }
-            }
-          } else {
-            opt[attrName] = true;
-          }
-        } else {
-          opt[attrName] = false;
-        }
-      } else {
-        opt[ipt.getAttribute("value")] = ipt.checked;
-      }
-    }
+    var AutoTypeSetPicker = baidu.editor.ui.AutoTypeSetPicker = function (options) {
+        this.initOptions(options);
+        this.initAutoTypeSetPicker();
+    };
+    AutoTypeSetPicker.prototype = {
+        initAutoTypeSetPicker:function () {
+            this.initUIBase();
+        },
+        getHtmlTpl:function () {
+            var me = this.editor,
+                opt = me.options.autotypeset,
+                lang = me.getLang("autoTypeSet");
 
-    var selects = domUtils.getElementsByTagName(cont, "select");
-    for (var i = 0, si; (si = selects[i++]); ) {
-      var attr = si.getAttribute("name");
-      opt[attr] = opt[attr] ? si.value : "";
-    }
+            var textAlignInputName = 'textAlignValue' + me.uid,
+                imageBlockInputName = 'imageBlockLineValue' + me.uid,
+                symbolConverInputName = 'symbolConverValue' + me.uid;
 
-    utils.extend(me.editor.options.autotypeset, opt);
+            return '<div id="##" class="edui-autotypesetpicker %%">' +
+                '<div class="edui-autotypesetpicker-body">' +
+                '<table >' +
+                '<tr><td nowrap><input type="checkbox" name="mergeEmptyline" ' + (opt["mergeEmptyline"] ? "checked" : "" ) + '>' + lang.mergeLine + '</td><td colspan="2"><input type="checkbox" name="removeEmptyline" ' + (opt["removeEmptyline"] ? "checked" : "" ) + '>' + lang.delLine + '</td></tr>' +
+                '<tr><td nowrap><input type="checkbox" name="removeClass" ' + (opt["removeClass"] ? "checked" : "" ) + '>' + lang.removeFormat + '</td><td colspan="2"><input type="checkbox" name="indent" ' + (opt["indent"] ? "checked" : "" ) + '>' + lang.indent + '</td></tr>' +
+                '<tr>' +
+                '<td nowrap><input type="checkbox" name="textAlign" ' + (opt["textAlign"] ? "checked" : "" ) + '>' + lang.alignment + '</td>' +
+                '<td colspan="2" id="' + textAlignInputName + '">' +
+                '<input type="radio" name="'+ textAlignInputName +'" value="left" ' + ((opt["textAlign"] && opt["textAlign"] == "left") ? "checked" : "") + '>' + me.getLang("justifyleft") +
+                '<input type="radio" name="'+ textAlignInputName +'" value="center" ' + ((opt["textAlign"] && opt["textAlign"] == "center") ? "checked" : "") + '>' + me.getLang("justifycenter") +
+                '<input type="radio" name="'+ textAlignInputName +'" value="right" ' + ((opt["textAlign"] && opt["textAlign"] == "right") ? "checked" : "") + '>' + me.getLang("justifyright") +
+                '</td>' +
+                '</tr>' +
+                '<tr>' +
+                '<td nowrap><input type="checkbox" name="imageBlockLine" ' + (opt["imageBlockLine"] ? "checked" : "" ) + '>' + lang.imageFloat + '</td>' +
+                '<td nowrap id="'+ imageBlockInputName +'">' +
+                '<input type="radio" name="'+ imageBlockInputName +'" value="none" ' + ((opt["imageBlockLine"] && opt["imageBlockLine"] == "none") ? "checked" : "") + '>' + me.getLang("default") +
+                '<input type="radio" name="'+ imageBlockInputName +'" value="left" ' + ((opt["imageBlockLine"] && opt["imageBlockLine"] == "left") ? "checked" : "") + '>' + me.getLang("justifyleft") +
+                '<input type="radio" name="'+ imageBlockInputName +'" value="center" ' + ((opt["imageBlockLine"] && opt["imageBlockLine"] == "center") ? "checked" : "") + '>' + me.getLang("justifycenter") +
+                '<input type="radio" name="'+ imageBlockInputName +'" value="right" ' + ((opt["imageBlockLine"] && opt["imageBlockLine"] == "right") ? "checked" : "") + '>' + me.getLang("justifyright") +
+                '</td>' +
+                '</tr>' +
+                '<tr><td nowrap><input type="checkbox" name="clearFontSize" ' + (opt["clearFontSize"] ? "checked" : "" ) + '>' + lang.removeFontsize + '</td><td colspan="2"><input type="checkbox" name="clearFontFamily" ' + (opt["clearFontFamily"] ? "checked" : "" ) + '>' + lang.removeFontFamily + '</td></tr>' +
+                '<tr><td nowrap colspan="3"><input type="checkbox" name="removeEmptyNode" ' + (opt["removeEmptyNode"] ? "checked" : "" ) + '>' + lang.removeHtml + '</td></tr>' +
+                '<tr><td nowrap colspan="3"><input type="checkbox" name="pasteFilter" ' + (opt["pasteFilter"] ? "checked" : "" ) + '>' + lang.pasteFilter + '</td></tr>' +
+                '<tr>' +
+                '<td nowrap><input type="checkbox" name="symbolConver" ' + (opt["bdc2sb"] || opt["tobdc"] ? "checked" : "" ) + '>' + lang.symbol + '</td>' +
+                '<td id="' + symbolConverInputName + '">' +
+                '<input type="radio" name="bdc" value="bdc2sb" ' + (opt["bdc2sb"] ? "checked" : "" ) + '>' + lang.bdc2sb +
+                '<input type="radio" name="bdc" value="tobdc" ' + (opt["tobdc"] ? "checked" : "" ) + '>' + lang.tobdc + '' +
+                '</td>' +
+                '<td nowrap align="right"><button >' + lang.run + '</button></td>' +
+                '</tr>' +
+                '</table>' +
+                '</div>' +
+                '</div>';
 
-    me.editor.setPreferences("autotypeset", opt);
-  }
 
-  AutoTypeSetButton.prototype = {
-    initAutoTypeSetButton: function() {
-      var me = this;
-      this.popup = new Popup({
-        //传入配置参数
-        content: new AutoTypeSetPicker({ editor: me.editor }),
-        editor: me.editor,
-        hide: function() {
-          if (!this._hidden && this.getDom()) {
-            getPara(this);
-            this.getDom().style.display = "none";
-            this._hidden = true;
-            this.fireEvent("hide");
-          }
-        }
-      });
-      var flag = 0;
-      this.popup.addListener("postRenderAfter", function() {
-        var popupUI = this;
-        if (flag) return;
-        var cont = this.getDom(),
-          btn = cont.getElementsByTagName("button")[0];
-
-        btn.onclick = function() {
-          getPara(popupUI);
-          me.editor.execCommand("autotypeset");
-          popupUI.hide();
-        };
-
-        domUtils.on(cont, "click", function(e) {
-          var target = e.target || e.srcElement,
-            editorId = me.editor.uid;
-          if (target && target.tagName == "INPUT") {
-            // 点击图片浮动的checkbox,去除对应的radio
-            if (
-              target.name == "imageBlockLine" ||
-              target.name == "textAlign" ||
-              target.name == "symbolConver"
-            ) {
-              var checked = target.checked,
-                radioTd = document.getElementById(
-                  target.name + "Value" + editorId
-                ),
-                radios = radioTd.getElementsByTagName("input"),
-                defalutSelect = {
-                  imageBlockLine: "none",
-                  textAlign: "left",
-                  symbolConver: "tobdc"
-                };
-
-              for (var i = 0; i < radios.length; i++) {
-                if (checked) {
-                  if (radios[i].value == defalutSelect[target.name]) {
-                    radios[i].checked = "checked";
-                  }
-                } else {
-                  radios[i].checked = false;
-                }
-              }
-            }
-            // 点击radio,选中对应的checkbox
-            if (
-              target.name == "imageBlockLineValue" + editorId ||
-              target.name == "textAlignValue" + editorId ||
-              target.name == "bdc"
-            ) {
-              var checkboxs = target.parentNode.previousSibling.getElementsByTagName(
-                "input"
-              );
-              checkboxs && (checkboxs[0].checked = true);
-            }
-
-            getPara(popupUI);
-          }
-        });
-
-        flag = 1;
-      });
-      this.initSplitButton();
-    }
-  };
-  utils.inherits(AutoTypeSetButton, SplitButton);
+        },
+        _UIBase_render:UIBase.prototype.render
+    };
+    utils.inherits(AutoTypeSetPicker, UIBase);
 })();

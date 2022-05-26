@@ -1,82 +1,56 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
-        "http://www.w3.org/TR/html4/loose.dtd">
-<html>
-<head>
-    <title>帮助</title>
-    <meta content="text/html; charset=utf-8" http-equiv="Content-Type"/>
-    <script type="text/javascript" src="../internal.js"></script>
-    <link rel="stylesheet" type="text/css" href="help.css">
-</head>
-<body>
-<div class="wrapper" id="helptab">
-    <div id="tabHeads" class="tabhead">
-        <span class="focus" tabsrc="about"><var id="lang_input_about"></var></span>
-        <span tabsrc="shortcuts"><var id="lang_input_shortcuts"></var></span>
-    </div>
-    <div id="tabBodys" class="tabbody">
-        <div id="about" class="panel">
-            <h1>UEditor</h1>
-            <p id="version"></p>
-            <p><var id="lang_input_introduction"></var></p>
-        </div>
-        <div id="shortcuts" class="panel">
-            <table>
-                <thead>
-                <tr>
-                    <td><var id="lang_Txt_shortcuts"></var></td>
-                    <td><var id="lang_Txt_func"></var></td>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>ctrl+b</td>
-                    <td><var id="lang_Txt_bold"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+c</td>
-                    <td><var id="lang_Txt_copy"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+x</td>
-                    <td><var id="lang_Txt_cut"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+v</td>
-                    <td><var id="lang_Txt_Paste"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+y</td>
-                    <td><var id="lang_Txt_undo"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+z</td>
-                    <td><var id="lang_Txt_redo"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+i</td>
-                    <td><var id="lang_Txt_italic"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+u</td>
-                    <td><var id="lang_Txt_underline"></var></td>
-                </tr>
-                <tr>
-                    <td>ctrl+a</td>
-                    <td><var id="lang_Txt_selectAll"></var></td>
-                </tr>
-                <tr>
-                    <td>shift+enter</td>
-                    <td><var id="lang_Txt_visualEnter"></var></td>
-                </tr>
-                <tr>
-                    <td>alt+z</td>
-                    <td><var id="lang_Txt_fullscreen"></var></td>
-                </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-<script type="text/javascript" src="help.js"></script>
-</body>
-</html>
+/**
+ * Created with JetBrains PhpStorm.
+ * User: xuheng
+ * Date: 12-9-26
+ * Time: 下午1:06
+ * To change this template use File | Settings | File Templates.
+ */
+/**
+ * tab点击处理事件
+ * @param tabHeads
+ * @param tabBodys
+ * @param obj
+ */
+function clickHandler( tabHeads,tabBodys,obj ) {
+    //head样式更改
+    for ( var k = 0, len = tabHeads.length; k < len; k++ ) {
+        tabHeads[k].className = "";
+    }
+    obj.className = "focus";
+    //body显隐
+    var tabSrc = obj.getAttribute( "tabSrc" );
+    for ( var j = 0, length = tabBodys.length; j < length; j++ ) {
+        var body = tabBodys[j],
+            id = body.getAttribute( "id" );
+        body.onclick = function(){
+            this.style.zoom = 1;
+        };
+        if ( id != tabSrc ) {
+            body.style.zIndex = 1;
+        } else {
+            body.style.zIndex = 200;
+        }
+    }
+
+}
+
+/**
+ * TAB切换
+ * @param tabParentId  tab的父节点ID或者对象本身
+ */
+function switchTab( tabParentId ) {
+    var tabElements = $G( tabParentId ).children,
+        tabHeads = tabElements[0].children,
+        tabBodys = tabElements[1].children;
+
+    for ( var i = 0, length = tabHeads.length; i < length; i++ ) {
+        var head = tabHeads[i];
+        if ( head.className === "focus" )clickHandler(tabHeads,tabBodys, head );
+        head.onclick = function () {
+            clickHandler(tabHeads,tabBodys,this);
+        }
+    }
+}
+switchTab("helptab");
+
+document.getElementById('version').innerHTML = parent.UE.version;

@@ -1,46 +1,72 @@
-/* 可选中按钮弹出菜单*/
-.edui-default .edui-menu {
-    z-index: 3000;
+/*可选中菜单按钮*/
+.edui-default .edui-list .edui-bordereraser {
+    display: none;
 }
 
-.edui-default .edui-menu .edui-popup-content {
-    padding: 3px;
+.edui-default .edui-listitem {
+    padding: 1px;
+    white-space: nowrap;
 }
 
-.edui-default .edui-menu-body {
-    _width: 150px;
-    min-width: 170px;
-    background: url("../images/sparator_v.png") repeat-y 25px;
+.edui-default .edui-list .edui-state-hover {
+    position: relative;
+    background-color: #fff5d4;
+    border: 1px solid #dcac6c;
+    padding: 0;
 }
 
-.edui-default .edui-menuitem-body {
-}
-
-.edui-default .edui-menuitem {
-    height: 20px;
-    cursor: default;
-    vertical-align: top;
-}
-
-.edui-default .edui-menuitem .edui-icon {
-    width: 20px !important;
-    height: 20px !important;
-    background: url(../images/icons.png) 0 -4000px;
-    background: url(../images/icons.gif) 0 -4000px\9;
-}
-
-.edui-default .edui-menuitem .edui-label {
+.edui-default .edui-for-fontfamily .edui-listitem-label {
+    min-width: 130px;
+    _width: 120px;
     font-size: 12px;
-    line-height: 20px;
-    height: 20px;
-    padding-left: 10px;
+    height: 22px;
+    line-height: 22px;
+    padding-left: 5px;
+}
+.edui-default .edui-for-insertcode .edui-listitem-label {
+    min-width: 120px;
+    _width: 120px;
+    font-size: 12px;
+    height: 22px;
+    line-height: 22px;
+    padding-left: 5px;
+}
+.edui-default .edui-for-underline .edui-listitem-label {
+    min-width: 120px;
+    _width: 120px;
+    padding: 3px 5px;
+    font-size: 12px;
 }
 
-.edui-default .edui-state-checked .edui-menuitem-body {
-    background: url("../images/icons-all.gif") no-repeat 6px -205px;
+.edui-default .edui-for-fontsize .edui-listitem-label {
+    min-width: 120px;
+    _width: 120px;
+    padding: 3px 5px;
+
 }
 
-.edui-default .edui-state-disabled .edui-menuitem-label {
-    color: gray;
+.edui-default .edui-for-paragraph .edui-listitem-label {
+    min-width: 200px;
+    _width: 200px;
+    padding: 2px 5px;
 }
 
+.edui-default .edui-for-rowspacingtop .edui-listitem-label,
+.edui-default .edui-for-rowspacingbottom .edui-listitem-label {
+    min-width: 53px;
+    _width: 53px;
+    padding: 2px 5px;
+}
+
+.edui-default .edui-for-lineheight .edui-listitem-label {
+    min-width: 53px;
+    _width: 53px;
+    padding: 2px 5px;
+}
+
+.edui-default .edui-for-customstyle .edui-listitem-label {
+    min-width: 200px;
+    _width: 200px;
+    width: 200px !important;
+    padding: 2px 5px;
+}

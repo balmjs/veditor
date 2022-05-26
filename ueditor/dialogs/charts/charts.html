@@ -1,165 +1,89 @@
-html, body {
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    overflow-x: hidden;
-}
-
-.main {
-    width: 100%;
-    overflow: hidden;
-}
-
-.table-view {
-    height: 100%;
-    float: left;
-    margin: 20px;
-    width: 40%;
-}
-
-.table-view .table-container {
-    width: 100%;
-    margin-bottom: 50px;
-    overflow: scroll;
-}
-
-.table-view th {
-    padding: 5px 10px;
-    background-color: #F7F7F7;
-}
-
-.table-view td {
-    width: 50px;
-    text-align: center;
-    padding:0;
-}
-
-.table-container input {
-    width: 40px;
-    padding: 5px;
-    border: none;
-    outline: none;
-}
-
-.table-view caption {
-    font-size: 18px;
-    text-align: left;
-}
-
-.charts-view {
-    /*margin-left: 49%!important;*/
-    width: 50%;
-    margin-left: 49%;
-    height: 400px;
-}
-
-.charts-container {
-    border-left: 1px solid #c3c3c3;
-}
-
-.charts-format fieldset {
-    padding-left: 20px;
-    margin-bottom: 50px;
-}
-
-.charts-format legend {
-    padding-left: 10px;
-    padding-right: 10px;
-}
-
-.format-item-container {
-    padding: 20px;
-}
-
-.format-item-container label {
-    display: block;
-    margin: 10px 0;
-}
-
-.charts-format .data-item {
-    border: 1px solid black;
-    outline: none;
-    padding: 2px 3px;
-}
-
-/* 图表类型 */
-
-.charts-type {
-    margin-top: 50px;
-    height: 300px;
-}
-
-.scroll-view {
-    border: 1px solid #c3c3c3;
-    border-left: none;
-    border-right: none;
-    overflow: hidden;
-}
-
-.scroll-container {
-    margin: 20px;
-    width: 100%;
-    overflow: hidden;
-}
-
-.scroll-bed {
-    width: 10000px;
-    _margin-top: 20px;
-    -webkit-transition: margin-left .5s ease;
-    -moz-transition: margin-left .5s ease;
-    transition: margin-left .5s ease;
-}
-
-.view-box {
-    display: inline-block;
-    *display: inline;
-    *zoom: 1;
-    margin-right: 20px;
-    border: 2px solid white;
-    line-height: 0;
-    overflow: hidden;
-    cursor: pointer;
-}
-
-.view-box img {
-    border: 1px solid #cecece;
-}
-
-.view-box.selected {
-    border-color: #7274A7;
-}
-
-.button-container {
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.button-container a {
-    display: inline-block;
-    width: 100px;
-    height: 25px;
-    line-height: 25px;
-    border: 1px solid #c2ccd1;
-    margin-right: 30px;
-    text-decoration: none;
-    color: black;
-    -webkit-border-radius: 2px;
-    -moz-border-radius: 2px;
-    border-radius: 2px;
-}
-
-.button-container a:HOVER {
-    background: #fcfcfc;
-}
-
-.button-container a:ACTIVE {
-    border-top-color: #c2ccd1;
-    box-shadow:inset 0 5px 4px -4px rgba(49, 49, 64, 0.1);
-}
-
-.edui-charts-not-data {
-    height: 100px;
-    line-height: 100px;
-    text-align: center;
-}
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>chart</title>
+        <meta chartset="utf-8">
+        <link rel="stylesheet" type="text/css" href="charts.css">
+        <script type="text/javascript" src="../internal.js"></script>
+    </head>
+    <body>
+        <div class="main">
+            <div class="table-view">
+                <h3><var id="lang_data_source"></var></h3>
+                <div id="tableContainer" class="table-container"></div>
+                <h3><var id="lang_chart_format"></var></h3>
+                <form name="data-form">
+                    <div class="charts-format">
+                        <fieldset>
+                            <legend><var id="lang_data_align"></var></legend>
+                            <div class="format-item-container">
+                                <label>
+                                    <input type="radio" class="format-ctrl not-pie-item" name="charts-format" value="1" checked="checked">
+                                    <var id="lang_chart_align_same"></var>
+                                </label>
+                                <label>
+                                    <input type="radio" class="format-ctrl not-pie-item" name="charts-format" value="-1">
+                                    <var id="lang_chart_align_reverse"></var>
+                                </label>
+                                <br>
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend><var id="lang_chart_title"></var></legend>
+                            <div class="format-item-container">
+                                <label>
+                                    <var id="lang_chart_main_title"></var><input type="text" name="title" class="data-item">
+                                </label>
+                                <label>
+                                    <var id="lang_chart_sub_title"></var><input type="text" name="sub-title" class="data-item not-pie-item">
+                                </label>
+                                <label>
+                                    <var id="lang_chart_x_title"></var><input type="text" name="x-title" class="data-item not-pie-item">
+                                </label>
+                                <label>
+                                    <var id="lang_chart_y_title"></var><input type="text" name="y-title" class="data-item not-pie-item">
+                                </label>
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend><var id="lang_chart_tip"></var></legend>
+                            <div class="format-item-container">
+                                <label>
+                                    <var id="lang_cahrt_tip_prefix"></var>
+                                    <input type="text" id="tipInput" name="tip" class="data-item" disabled="disabled">
+                                </label>
+                                <p><var id="lang_cahrt_tip_description"></var></p>
+                            </div>
+                        </fieldset>
+                        <fieldset>
+                            <legend><var id="lang_chart_data_unit"></var></legend>
+                            <div class="format-item-container">
+                                <label><var id="lang_chart_data_unit_title"></var><input type="text" name="unit" class="data-item"></label>
+                                <p><var id="lang_chart_data_unit_description"></var></p>
+                            </div>
+                        </fieldset>
+                    </div>
+                </form>
+            </div>
+            <div class="charts-view">
+                <div id="chartsContainer" class="charts-container"></div>
+                <div id="chartsType" class="charts-type">
+                    <h3><var id="lang_chart_type"></var></h3>
+                    <div class="scroll-view">
+                        <div class="scroll-container">
+                            <div id="scrollBed" class="scroll-bed"></div>
+                        </div>
+                        <div id="buttonContainer" class="button-container">
+                            <a href="#" data-title="prev"><var id="lang_prev_btn"></var></a>
+                            <a href="#" data-title="next"><var id="lang_next_btn"></var></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script src="../../third-party/jquery-1.10.2.min.js"></script>
+        <script src="../../third-party/highcharts/highcharts.js"></script>
+        <script src="chart.config.js"></script>
+        <script src="charts.js"></script>
+    </body>
+</html>

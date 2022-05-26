@@ -1,99 +1,108 @@
-///import core
-///import uicore
-///import ui/stateful.js
-(function() {
-  var utils = baidu.editor.utils,
-    uiUtils = baidu.editor.ui.uiUtils,
-    domUtils = baidu.editor.dom.domUtils,
-    UIBase = baidu.editor.ui.UIBase,
-    Stateful = baidu.editor.ui.Stateful,
-    SplitButton = (baidu.editor.ui.SplitButton = function(options) {
-      this.initOptions(options);
-      this.initSplitButton();
-    });
-  SplitButton.prototype = {
-    popup: null,
-    uiName: "splitbutton",
-    title: "",
-    initSplitButton: function() {
-      this.initUIBase();
-      this.Stateful_init();
-      var me = this;
-      if (this.popup != null) {
-        var popup = this.popup;
-        this.popup = null;
-        this.setPopup(popup);
-      }
-    },
-    _UIBase_postRender: UIBase.prototype.postRender,
-    postRender: function() {
-      this.Stateful_postRender();
-      this._UIBase_postRender();
-    },
-    setPopup: function(popup) {
-      if (this.popup === popup) return;
-      if (this.popup != null) {
-        this.popup.dispose();
-      }
-      popup.addListener("show", utils.bind(this._onPopupShow, this));
-      popup.addListener("hide", utils.bind(this._onPopupHide, this));
-      popup.addListener(
-        "postrender",
-        utils.bind(function() {
-          popup
-            .getDom("body")
-            .appendChild(
-              uiUtils.createElementByHtml(
-                '<div id="' +
-                  this.popup.id +
-                  '_bordereraser" class="edui-bordereraser edui-background" style="width:' +
-                  (uiUtils.getClientRect(this.getDom()).width + 20) +
-                  'px"></div>'
-              )
-            );
-          popup.getDom().className += " " + this.className;
-        }, this)
-      );
-      this.popup = popup;
-    },
-    _onPopupShow: function() {
-      this.addState("opened");
-    },
-    _onPopupHide: function() {
-      this.removeState("opened");
-    },
-    getHtmlTpl: function() {
-      return (
-        '<div id="##" class="edui-box %%">' +
-        "<div " +
-        (this.title ? 'title="' + this.title + '"' : "") +
-        ' id="##_state" stateful><div class="%%-body">' +
-        '<div id="##_button_body" class="edui-box edui-button-body" onclick="$$._onButtonClick(event, this);">' +
-        '<div class="edui-box edui-icon"></div>' +
-        "</div>" +
-        '<div class="edui-box edui-splitborder"></div>' +
-        '<div class="edui-box edui-arrow" onclick="$$._onArrowClick();"></div>' +
-        "</div></div></div>"
-      );
-    },
-    showPopup: function() {
-      // 当popup往上弹出的时候，做特殊处理
-      var rect = uiUtils.getClientRect(this.getDom());
-      rect.top -= this.popup.SHADOW_RADIUS;
-      rect.height += this.popup.SHADOW_RADIUS;
-      this.popup.showAnchorRect(rect);
-    },
-    _onArrowClick: function(event, el) {
-      if (!this.isDisabled()) {
-        this.showPopup();
-      }
-    },
-    _onButtonClick: function() {
-      if (!this.isDisabled()) {
-        this.fireEvent("buttonclick");
-      }
-    }
-  };
-  utils.inherits(SplitButton, UIBase);
-  utils.extend(SplitButton.prototype, Stateful, true);
+(function (){
+    var browser = baidu.editor.browser,
+        domUtils = baidu.editor.dom.domUtils,
+        uiUtils = baidu.editor.ui.uiUtils;
+    
+    var TPL_STATEFUL = 'onmousedown="$$.Stateful_onMouseDown(event, this);"' +
+        ' onmouseup="$$.Stateful_onMouseUp(event, this);"' +
+        ( browser.ie ? (
+        ' onmouseenter="$$.Stateful_onMouseEnter(event, this);"' +
+        ' onmouseleave="$$.Stateful_onMouseLeave(event, this);"' )
+        : (
+        ' onmouseover="$$.Stateful_onMouseOver(event, this);"' +
+        ' onmouseout="$$.Stateful_onMouseOut(event, this);"' ));
+    
+    baidu.editor.ui.Stateful = {
+        alwalysHoverable: false,
+        target:null,//目标元素和this指向dom不一样
+        Stateful_init: function (){
+            this._Stateful_dGetHtmlTpl = this.getHtmlTpl;
+            this.getHtmlTpl = this.Stateful_getHtmlTpl;
+        },
+        Stateful_getHtmlTpl: function (){
+            var tpl = this._Stateful_dGetHtmlTpl();
+            // 使用function避免$转义
+            return tpl.replace(/stateful/g, function (){ return TPL_STATEFUL; });
+        },
+        Stateful_onMouseEnter: function (evt, el){
+            this.target=el;
+            if (!this.isDisabled() || this.alwalysHoverable) {
+                this.addState('hover');
+                this.fireEvent('over');
+            }
+        },
+        Stateful_onMouseLeave: function (evt, el){
+            if (!this.isDisabled() || this.alwalysHoverable) {
+                this.removeState('hover');
+                this.removeState('active');
+                this.fireEvent('out');
+            }
+        },
+        Stateful_onMouseOver: function (evt, el){
+            var rel = evt.relatedTarget;
+            if (!uiUtils.contains(el, rel) && el !== rel) {
+                this.Stateful_onMouseEnter(evt, el);
+            }
+        },
+        Stateful_onMouseOut: function (evt, el){
+            var rel = evt.relatedTarget;
+            if (!uiUtils.contains(el, rel) && el !== rel) {
+                this.Stateful_onMouseLeave(evt, el);
+            }
+        },
+        Stateful_onMouseDown: function (evt, el){
+            if (!this.isDisabled()) {
+                this.addState('active');
+            }
+        },
+        Stateful_onMouseUp: function (evt, el){
+            if (!this.isDisabled()) {
+                this.removeState('active');
+            }
+        },
+        Stateful_postRender: function (){
+            if (this.disabled && !this.hasState('disabled')) {
+                this.addState('disabled');
+            }
+        },
+        hasState: function (state){
+            return domUtils.hasClass(this.getStateDom(), 'edui-state-' + state);
+        },
+        addState: function (state){
+            if (!this.hasState(state)) {
+                this.getStateDom().className += ' edui-state-' + state;
+            }
+        },
+        removeState: function (state){
+            if (this.hasState(state)) {
+                domUtils.removeClasses(this.getStateDom(), ['edui-state-' + state]);
+            }
+        },
+        getStateDom: function (){
+            return this.getDom('state');
+        },
+        isChecked: function (){
+            return this.hasState('checked');
+        },
+        setChecked: function (checked){
+            if (!this.isDisabled() && checked) {
+                this.addState('checked');
+            } else {
+                this.removeState('checked');
+            }
+        },
+        isDisabled: function (){
+            return this.hasState('disabled');
+        },
+        setDisabled: function (disabled){
+            if (disabled) {
+                this.removeState('hover');
+                this.removeState('checked');
+                this.removeState('active');
+                this.addState('disabled');
+            } else {
+                this.removeState('disabled');
+            }
+        }
+    };
 })();

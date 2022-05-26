@@ -1,4 +1,4 @@
-(function() {
+(function () {
   var paths = [
     'parse.js',
     'insertcode.js',
@@ -17,7 +17,7 @@
   }
 
   function getConfigFilePath() {
-    var configPath = document.getElementsByTagName("script");
+    var configPath = document.getElementsByTagName('script');
 
     return configPath[configPath.length - 1].src;
   }
@@ -26,9 +26,12 @@
     var basePath = confUrl;
 
     if (!/^[a-z]+:/i.test(confUrl)) {
-      docUrl = docUrl.split("#")[0].split("?")[0].replace(/[^\\\/]+$/, "");
+      docUrl = docUrl
+        .split('#')[0]
+        .split('?')[0]
+        .replace(/[^\\\/]+$/, '');
 
-      basePath = docUrl + "" + confUrl;
+      basePath = docUrl + '' + confUrl;
     }
 
     return optimizationPath(basePath);
@@ -39,23 +42,23 @@
       tmp = null,
       res = [];
 
-    path = path.replace(protocol, "").split("?")[0].split("#")[0];
+    path = path.replace(protocol, '').split('?')[0].split('#')[0];
 
-    path = path.replace(/\\/g, "/").split(/\//);
+    path = path.replace(/\\/g, '/').split(/\//);
 
-    path[path.length - 1] = "";
+    path[path.length - 1] = '';
 
     while (path.length) {
-      if ((tmp = path.shift()) === "..") {
+      if ((tmp = path.shift()) === '..') {
         res.pop();
-      } else if (tmp !== ".") {
+      } else if (tmp !== '.') {
         res.push(tmp);
       }
     }
 
-    return protocol + res.join("/");
+    return protocol + res.join('/');
   }
-  var baseURL = getUEBasePath() + "_parse/";
+  var baseURL = getUEBasePath() + '_parse/';
   for (var i = 0, pi; (pi = paths[i++]); ) {
     document.write(
       '<script type="text/javascript" src="' + baseURL + pi + '"></script>'

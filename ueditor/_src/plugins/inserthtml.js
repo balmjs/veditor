@@ -1,90 +1,255 @@
 /**
- * 插入附件
+ * 插入html字符串插件
+ * @file
+ * @since 1.2.6.1
  */
-UE.plugin.register("insertfile", function() {
-  var me = this;
 
-  function getFileIcon(url) {
-    var ext = url.substr(url.lastIndexOf(".") + 1).toLowerCase(),
-      maps = {
-        rar: "icon_rar.gif",
-        zip: "icon_rar.gif",
-        tar: "icon_rar.gif",
-        gz: "icon_rar.gif",
-        bz2: "icon_rar.gif",
-        doc: "icon_doc.gif",
-        docx: "icon_doc.gif",
-        pdf: "icon_pdf.gif",
-        mp3: "icon_mp3.gif",
-        xls: "icon_xls.gif",
-        chm: "icon_chm.gif",
-        ppt: "icon_ppt.gif",
-        pptx: "icon_ppt.gif",
-        avi: "icon_mv.gif",
-        rmvb: "icon_mv.gif",
-        wmv: "icon_mv.gif",
-        flv: "icon_mv.gif",
-        swf: "icon_mv.gif",
-        rm: "icon_mv.gif",
-        exe: "icon_exe.gif",
-        psd: "icon_psd.gif",
-        txt: "icon_txt.gif",
-        jpg: "icon_jpg.gif",
-        png: "icon_jpg.gif",
-        jpeg: "icon_jpg.gif",
-        gif: "icon_jpg.gif",
-        ico: "icon_jpg.gif",
-        bmp: "icon_jpg.gif"
-      };
-    return maps[ext] ? maps[ext] : maps["txt"];
-  }
+/**
+ * 插入html代码
+ * @command inserthtml
+ * @method execCommand
+ * @param { String } cmd 命令字符串
+ * @param { String } html 插入的html字符串
+ * @remaind 插入的标签内容是在当前的选区位置上插入，如果当前是闭合状态，那直接插入内容， 如果当前是选中状态，将先清除当前选中内容后，再做插入
+ * @warning 注意:该命令会对当前选区的位置，对插入的内容进行过滤转换处理。 过滤的规则遵循html语意化的原则。
+ * @example
+ * ```javascript
+ * //xxx[BB]xxx 当前选区为非闭合选区，选中BB这两个文本
+ * //执行命令，插入<b>CC</b>
+ * //插入后的效果 xxx<b>CC</b>xxx
+ * //<p>xx|xxx</p> 当前选区为闭合状态
+ * //插入<p>CC</p>
+ * //结果 <p>xx</p><p>CC</p><p>xxx</p>
+ * //<p>xxxx</p>|</p>xxx</p> 当前选区在两个p标签之间
+ * //插入 xxxx
+ * //结果 <p>xxxx</p><p>xxxx</p></p>xxx</p>
+ * ```
+ */
 
-  return {
-    commands: {
-      insertfile: {
-        execCommand: function(command, filelist) {
-          filelist = utils.isArray(filelist) ? filelist : [filelist];
-
-          if (me.fireEvent("beforeinsertfile", filelist) === true) {
+UE.commands['inserthtml'] = {
+    execCommand: function (command,html,notNeedFilter){
+        var me = this,
+            range,
+            div;
+        if(!html){
             return;
-          }
-
-          var i,
-            item,
-            icon,
-            title,
-            html = "",
-            URL = me.getOpt("UEDITOR_HOME_URL"),
-            iconDir =
-              URL +
-              (URL.substr(URL.length - 1) == "/" ? "" : "/") +
-              "dialogs/attachment/fileTypeImages/";
-          for (i = 0; i < filelist.length; i++) {
-            item = filelist[i];
-            icon = iconDir + getFileIcon(item.url);
-            title =
-              item.title || item.url.substr(item.url.lastIndexOf("/") + 1);
-            html +=
-              '<p style="line-height: 16px;">' +
-              '<img style="vertical-align: middle; margin-right: 2px;" src="' +
-              icon +
-              '" _src="' +
-              icon +
-              '" />' +
-              '<a style="font-size:12px; color:#0066cc;" href="' +
-              item.url +
-              '" title="' +
-              title +
-              '">' +
-              title +
-              "</a>" +
-              "</p>";
-          }
-          me.execCommand("insertHtml", html);
-
-          me.fireEvent("afterinsertfile", filelist);
         }
-      }
+        if(me.fireEvent('beforeinserthtml',html) === true){
+            return;
+        }
+        range = me.selection.getRange();
+        div = range.document.createElement( 'div' );
+        div.style.display = 'inline';
+
+        if (!notNeedFilter) {
+            var root = UE.htmlparser(html);
+            //如果给了过滤规则就先进行过滤
+            if(me.options.filterRules){
+                UE.filterNode(root,me.options.filterRules);
+            }
+            //执行默认的处理
+            me.filterInputRule(root);
+            html = root.toHtml()
+        }
+        div.innerHTML = utils.trim( html );
+
+        if ( !range.collapsed ) {
+            var tmpNode = range.startContainer;
+            if(domUtils.isFillChar(tmpNode)){
+                range.setStartBefore(tmpNode)
+            }
+            tmpNode = range.endContainer;
+            if(domUtils.isFillChar(tmpNode)){
+                range.setEndAfter(tmpNode)
+            }
+            range.txtToElmBoundary();
+            //结束边界可能放到了br的前边，要把br包含进来
+            // x[xxx]<br/>
+            if(range.endContainer && range.endContainer.nodeType == 1){
+                tmpNode = range.endContainer.childNodes[range.endOffset];
+                if(tmpNode && domUtils.isBr(tmpNode)){
+                    range.setEndAfter(tmpNode);
+                }
+            }
+            if(range.startOffset == 0){
+                tmpNode = range.startContainer;
+                if(domUtils.isBoundaryNode(tmpNode,'firstChild') ){
+                    tmpNode = range.endContainer;
+                    if(range.endOffset == (tmpNode.nodeType == 3 ? tmpNode.nodeValue.length : tmpNode.childNodes.length) && domUtils.isBoundaryNode(tmpNode,'lastChild')){
+                        me.body.innerHTML = '<p>'+(browser.ie ? '' : '<br/>')+'</p>';
+                        range.setStart(me.body.firstChild,0).collapse(true)
+
+                    }
+                }
+            }
+            !range.collapsed && range.deleteContents();
+            if(range.startContainer.nodeType == 1){
+                var child = range.startContainer.childNodes[range.startOffset],pre;
+                if(child && domUtils.isBlockElm(child) && (pre = child.previousSibling) && domUtils.isBlockElm(pre)){
+                    range.setEnd(pre,pre.childNodes.length).collapse();
+                    while(child.firstChild){
+                        pre.appendChild(child.firstChild);
+                    }
+                    domUtils.remove(child);
+                }
+            }
+
+        }
+
+
+        var child,parent,pre,tmp,hadBreak = 0, nextNode;
+        //如果当前位置选中了fillchar要干掉，要不会产生空行
+        if(range.inFillChar()){
+            child = range.startContainer;
+            if(domUtils.isFillChar(child)){
+                range.setStartBefore(child).collapse(true);
+                domUtils.remove(child);
+            }else if(domUtils.isFillChar(child,true)){
+                child.nodeValue = child.nodeValue.replace(fillCharReg,'');
+                range.startOffset--;
+                range.collapsed && range.collapse(true)
+            }
+        }
+        //列表单独处理
+        var li = domUtils.findParentByTagName(range.startContainer,'li',true);
+        if(li){
+            var next,last;
+            while(child = div.firstChild){
+                //针对hr单独处理一下先
+                while(child && (child.nodeType == 3 || !domUtils.isBlockElm(child) || child.tagName=='HR' )){
+                    next = child.nextSibling;
+                    range.insertNode( child).collapse();
+                    last = child;
+                    child = next;
+
+                }
+                if(child){
+                    if(/^(ol|ul)$/i.test(child.tagName)){
+                        while(child.firstChild){
+                            last = child.firstChild;
+                            domUtils.insertAfter(li,child.firstChild);
+                            li = li.nextSibling;
+                        }
+                        domUtils.remove(child)
+                    }else{
+                        var tmpLi;
+                        next = child.nextSibling;
+                        tmpLi = me.document.createElement('li');
+                        domUtils.insertAfter(li,tmpLi);
+                        tmpLi.appendChild(child);
+                        last = child;
+                        child = next;
+                        li = tmpLi;
+                    }
+                }
+            }
+            li = domUtils.findParentByTagName(range.startContainer,'li',true);
+            if(domUtils.isEmptyBlock(li)){
+                domUtils.remove(li)
+            }
+            if(last){
+
+                range.setStartAfter(last).collapse(true).select(true)
+            }
+        }else{
+            while ( child = div.firstChild ) {
+                if(hadBreak){
+                    var p = me.document.createElement('p');
+                    while(child && (child.nodeType == 3 || !dtd.$block[child.tagName])){
+                        nextNode = child.nextSibling;
+                        p.appendChild(child);
+                        child = nextNode;
+                    }
+                    if(p.firstChild){
+
+                        child = p
+                    }
+                }
+                range.insertNode( child );
+                nextNode = child.nextSibling;
+                if ( !hadBreak && child.nodeType == domUtils.NODE_ELEMENT && domUtils.isBlockElm( child ) ){
+
+                    parent = domUtils.findParent( child,function ( node ){ return domUtils.isBlockElm( node ); } );
+                    if ( parent && parent.tagName.toLowerCase() != 'body' && !(dtd[parent.tagName][child.nodeName] && child.parentNode === parent)){
+                        if(!dtd[parent.tagName][child.nodeName]){
+                            pre = parent;
+                        }else{
+                            tmp = child.parentNode;
+                            while (tmp !== parent){
+                                pre = tmp;
+                                tmp = tmp.parentNode;
+
+                            }
+                        }
+
+
+                        domUtils.breakParent( child, pre || tmp );
+                        //去掉break后前一个多余的节点  <p>|<[p> ==> <p></p><div></div><p>|</p>
+                        var pre = child.previousSibling;
+                        domUtils.trimWhiteTextNode(pre);
+                        if(!pre.childNodes.length){
+                            domUtils.remove(pre);
+                        }
+                        //trace:2012,在非ie的情况，切开后剩下的节点有可能不能点入光标添加br占位
+
+                        if(!browser.ie &&
+                            (next = child.nextSibling) &&
+                            domUtils.isBlockElm(next) &&
+                            next.lastChild &&
+                            !domUtils.isBr(next.lastChild)){
+                            next.appendChild(me.document.createElement('br'));
+                        }
+                        hadBreak = 1;
+                    }
+                }
+                var next = child.nextSibling;
+                if(!div.firstChild && next && domUtils.isBlockElm(next)){
+
+                    range.setStart(next,0).collapse(true);
+                    break;
+                }
+                range.setEndAfter( child ).collapse();
+
+            }
+
+            child = range.startContainer;
+
+            if(nextNode && domUtils.isBr(nextNode)){
+                domUtils.remove(nextNode)
+            }
+            //用chrome可能有空白展位符
+            if(domUtils.isBlockElm(child) && domUtils.isEmptyNode(child)){
+                if(nextNode = child.nextSibling){
+                    domUtils.remove(child);
+                    if(nextNode.nodeType == 1 && dtd.$block[nextNode.tagName]){
+
+                        range.setStart(nextNode,0).collapse(true).shrinkBoundary()
+                    }
+                }else{
+
+                    try{
+                        child.innerHTML = browser.ie ? domUtils.fillChar : '<br/>';
+                    }catch(e){
+                        range.setStartBefore(child);
+                        domUtils.remove(child)
+                    }
+
+                }
+
+            }
+            //加上true因为在删除表情等时会删两次，第一次是删的fillData
+            try{
+                range.select(true);
+            }catch(e){}
+
+        }
+
+
+
+        setTimeout(function(){
+            range = me.selection.getRange();
+            range.scrollToView(me.autoHeightEnabled,me.autoHeightEnabled ? domUtils.getXY(me.iframe).y:0);
+            me.fireEvent('afterinserthtml', html);
+        },200);
     }
-  };
-});
+};

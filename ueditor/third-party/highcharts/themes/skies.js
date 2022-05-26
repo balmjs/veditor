@@ -1,100 +1,86 @@
 /**
- * Grid theme for Highcharts JS
+ * Skies theme for Highcharts JS
  * @author Torstein Hønsi
  */
 
 Highcharts.theme = {
-	colors: ['#058DC7', '#50B432', '#ED561B', '#DDDF00', '#24CBE5', '#64E572', '#FF9655', '#FFF263', '#6AF9C4'],
+	colors: ["#514F78", "#42A07B", "#9B5E4A", "#72727F", "#1F949A", "#82914E", "#86777F", "#42A07B"],
 	chart: {
-		backgroundColor: {
-			linearGradient: { x1: 0, y1: 0, x2: 1, y2: 1 },
+		className: 'skies',
+		borderWidth: 0,
+		plotShadow: true,
+		plotBackgroundImage: 'http://www.highcharts.com/demo/gfx/skies.jpg',
+		plotBackgroundColor: {
+			linearGradient: [0, 0, 250, 500],
 			stops: [
-				[0, 'rgb(255, 255, 255)'],
-				[1, 'rgb(240, 240, 255)']
+				[0, 'rgba(255, 255, 255, 1)'],
+				[1, 'rgba(255, 255, 255, 0)']
 			]
 		},
-		borderWidth: 2,
-		plotBackgroundColor: 'rgba(255, 255, 255, .9)',
-		plotShadow: true,
 		plotBorderWidth: 1
 	},
 	title: {
 		style: {
-			color: '#000',
-			font: 'bold 16px "Trebuchet MS", Verdana, sans-serif'
+			color: '#3E576F',
+			font: '16px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
 		}
 	},
 	subtitle: {
 		style: {
-			color: '#666666',
-			font: 'bold 12px "Trebuchet MS", Verdana, sans-serif'
+			color: '#6D869F',
+			font: '12px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
 		}
 	},
 	xAxis: {
-		gridLineWidth: 1,
-		lineColor: '#000',
-		tickColor: '#000',
+		gridLineWidth: 0,
+		lineColor: '#C0D0E0',
+		tickColor: '#C0D0E0',
 		labels: {
 			style: {
-				color: '#000',
-				font: '11px Trebuchet MS, Verdana, sans-serif'
+				color: '#666',
+				fontWeight: 'bold'
 			}
 		},
 		title: {
 			style: {
-				color: '#333',
-				fontWeight: 'bold',
-				fontSize: '12px',
-				fontFamily: 'Trebuchet MS, Verdana, sans-serif'
-
+				color: '#666',
+				font: '12px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
 			}
 		}
 	},
 	yAxis: {
-		minorTickInterval: 'auto',
-		lineColor: '#000',
-		lineWidth: 1,
+		alternateGridColor: 'rgba(255, 255, 255, .5)',
+		lineColor: '#C0D0E0',
+		tickColor: '#C0D0E0',
 		tickWidth: 1,
-		tickColor: '#000',
 		labels: {
 			style: {
-				color: '#000',
-				font: '11px Trebuchet MS, Verdana, sans-serif'
+				color: '#666',
+				fontWeight: 'bold'
 			}
 		},
 		title: {
 			style: {
-				color: '#333',
-				fontWeight: 'bold',
-				fontSize: '12px',
-				fontFamily: 'Trebuchet MS, Verdana, sans-serif'
+				color: '#666',
+				font: '12px Lucida Grande, Lucida Sans Unicode, Verdana, Arial, Helvetica, sans-serif'
 			}
 		}
 	},
 	legend: {
 		itemStyle: {
 			font: '9pt Trebuchet MS, Verdana, sans-serif',
-			color: 'black'
-
+			color: '#3E576F'
 		},
 		itemHoverStyle: {
-			color: '#039'
+			color: 'black'
 		},
 		itemHiddenStyle: {
-			color: 'gray'
+			color: 'silver'
 		}
 	},
 	labels: {
 		style: {
-			color: '#99b'
-		}
-	},
-
-	navigation: {
-		buttonOptions: {
-			theme: {
-				stroke: '#CCCCCC'
-			}
+			color: '#3E576F'
 		}
 	}
 };

@@ -1,148 +1,115 @@
 ///import core
-///commands 悬浮工具栏
-///commandsName  AutoFloat,autoFloatEnabled
-///commandsTitle  悬浮工具栏
+///commands 当输入内容超过编辑器高度时，编辑器自动增高
+///commandsName  AutoHeight,autoHeightEnabled
+///commandsTitle  自动增高
 /**
- *  modified by chengchao01
- *  注意： 引入此功能后，在IE6下会将body的背景图片覆盖掉！
+ * @description 自动伸展
+ * @author zhanyi
  */
-UE.plugins["autofloat"] = function() {
-  var me = this,
-    lang = me.getLang();
-  me.setOpt({
-    topOffset: 0
-  });
-  var optsAutoFloatEnabled = me.options.autoFloatEnabled !== false,
-    topOffset = me.options.topOffset;
-
-  //如果不固定toolbar的位置，则直接退出
-  if (!optsAutoFloatEnabled) {
-    return;
-  }
-  var uiUtils = UE.ui.uiUtils,
-    LteIE6 = browser.ie && browser.version <= 6,
-    quirks = browser.quirks;
-
-  function checkHasUI() {
-    if (!UE.ui) {
-      alert(lang.autofloatMsg);
-      return 0;
-    }
-    return 1;
-  }
-  function fixIE6FixedPos() {
-    var docStyle = document.body.style;
-    docStyle.backgroundImage = 'url("about:blank")';
-    docStyle.backgroundAttachment = "fixed";
-  }
-  var bakCssText,
-    placeHolder = document.createElement("div"),
-    toolbarBox,
-    orgTop,
-    getPosition,
-    flag = true; //ie7模式下需要偏移
-  function setFloating() {
-    var toobarBoxPos = domUtils.getXY(toolbarBox),
-      origalFloat = domUtils.getComputedStyle(toolbarBox, "position"),
-      origalLeft = domUtils.getComputedStyle(toolbarBox, "left");
-    toolbarBox.style.width = toolbarBox.offsetWidth + "px";
-    toolbarBox.style.zIndex = me.options.zIndex * 1 + 1;
-    toolbarBox.parentNode.insertBefore(placeHolder, toolbarBox);
-    if (LteIE6 || (quirks && browser.ie)) {
-      if (toolbarBox.style.position != "absolute") {
-        toolbarBox.style.position = "absolute";
-      }
-      toolbarBox.style.top =
-        (document.body.scrollTop || document.documentElement.scrollTop) -
-        orgTop +
-        topOffset +
-        "px";
-    } else {
-      if (browser.ie7Compat && flag) {
-        flag = false;
-        toolbarBox.style.left =
-          domUtils.getXY(toolbarBox).x -
-          document.documentElement.getBoundingClientRect().left +
-          2 +
-          "px";
-      }
-      if (toolbarBox.style.position != "fixed") {
-        toolbarBox.style.position = "fixed";
-        toolbarBox.style.top = topOffset + "px";
-        (origalFloat == "absolute" || origalFloat == "relative") &&
-          parseFloat(origalLeft) &&
-          (toolbarBox.style.left = toobarBoxPos.x + "px");
-      }
-    }
-  }
-  function unsetFloating() {
-    flag = true;
-    if (placeHolder.parentNode) {
-      placeHolder.parentNode.removeChild(placeHolder);
-    }
-
-    toolbarBox.style.cssText = bakCssText;
-  }
-
-  function updateFloating() {
-    var rect3 = getPosition(me.container);
-    var offset = me.options.toolbarTopOffset || 0;
-    if (rect3.top < 0 && rect3.bottom - toolbarBox.offsetHeight > offset) {
-      setFloating();
-    } else {
-      unsetFloating();
-    }
-  }
-  var defer_updateFloating = utils.defer(
-    function() {
-      updateFloating();
-    },
-    browser.ie ? 200 : 100,
-    true
-  );
-
-  me.addListener("destroy", function() {
-    domUtils.un(window, ["scroll", "resize"], updateFloating);
-    me.removeListener("keydown", defer_updateFloating);
-  });
-
-  me.addListener("ready", function() {
-    if (checkHasUI(me)) {
-      //加载了ui组件，但在new时，没有加载ui，导致编辑器实例上没有ui类，所以这里做判断
-      if (!me.ui) {
+UE.plugins['autoheight'] = function () {
+    var me = this;
+    //提供开关，就算加载也可以关闭
+    me.autoHeightEnabled = me.options.autoHeightEnabled !== false;
+    if (!me.autoHeightEnabled) {
         return;
-      }
-      getPosition = uiUtils.getClientRect;
-      toolbarBox = me.ui.getDom("toolbarbox");
-      orgTop = getPosition(toolbarBox).top;
-      bakCssText = toolbarBox.style.cssText;
-      placeHolder.style.height = toolbarBox.offsetHeight + "px";
-      if (LteIE6) {
-        fixIE6FixedPos();
-      }
-      domUtils.on(window, ["scroll", "resize"], updateFloating);
-      me.addListener("keydown", defer_updateFloating);
-
-      me.addListener("beforefullscreenchange", function(t, enabled) {
-        if (enabled) {
-          unsetFloating();
-        }
-      });
-      me.addListener("fullscreenchanged", function(t, enabled) {
-        if (!enabled) {
-          updateFloating();
-        }
-      });
-      me.addListener("sourcemodechanged", function(t, enabled) {
-        setTimeout(function() {
-          updateFloating();
-        }, 0);
-      });
-      me.addListener("clearDoc", function() {
-        setTimeout(function() {
-          updateFloating();
-        }, 0);
-      });
     }
-  });
+
+    var bakOverflow,
+        lastHeight = 0,
+        options = me.options,
+        currentHeight,
+        timer;
+
+    function adjustHeight() {
+        var me = this;
+        clearTimeout(timer);
+        if(isFullscreen)return;
+        if (!me.queryCommandState || me.queryCommandState && me.queryCommandState('source') != 1) {
+            timer = setTimeout(function(){
+
+                var node = me.body.lastChild;
+                while(node && node.nodeType != 1){
+                    node = node.previousSibling;
+                }
+                if(node && node.nodeType == 1){
+                    node.style.clear = 'both';
+                    currentHeight = Math.max(domUtils.getXY(node).y + node.offsetHeight + 25 ,Math.max(options.minFrameHeight, options.initialFrameHeight)) ;
+                    if (currentHeight != lastHeight) {
+                        if (currentHeight !== parseInt(me.iframe.parentNode.style.height)) {
+                            me.iframe.parentNode.style.height = currentHeight + 'px';
+                        }
+                        me.body.style.height = currentHeight + 'px';
+                        lastHeight = currentHeight;
+                    }
+                    domUtils.removeStyle(node,'clear');
+                }
+
+
+            },50)
+        }
+    }
+    var isFullscreen;
+    me.addListener('fullscreenchanged',function(cmd,f){
+        isFullscreen = f
+    });
+    me.addListener('destroy', function () {
+        me.removeListener('contentchange afterinserthtml keyup mouseup',adjustHeight)
+    });
+    me.enableAutoHeight = function () {
+        var me = this;
+        if (!me.autoHeightEnabled) {
+            return;
+        }
+        var doc = me.document;
+        me.autoHeightEnabled = true;
+        bakOverflow = doc.body.style.overflowY;
+        doc.body.style.overflowY = 'hidden';
+        me.addListener('contentchange afterinserthtml keyup mouseup',adjustHeight);
+        //ff不给事件算得不对
+
+        setTimeout(function () {
+            adjustHeight.call(me);
+        }, browser.gecko ? 100 : 0);
+        me.fireEvent('autoheightchanged', me.autoHeightEnabled);
+    };
+    me.disableAutoHeight = function () {
+
+        me.body.style.overflowY = bakOverflow || '';
+
+        me.removeListener('contentchange', adjustHeight);
+        me.removeListener('keyup', adjustHeight);
+        me.removeListener('mouseup', adjustHeight);
+        me.autoHeightEnabled = false;
+        me.fireEvent('autoheightchanged', me.autoHeightEnabled);
+    };
+
+    me.on('setHeight',function(){
+        me.disableAutoHeight()
+    });
+    me.addListener('ready', function () {
+        me.enableAutoHeight();
+        //trace:1764
+        var timer;
+        domUtils.on(browser.ie ? me.body : me.document, browser.webkit ? 'dragover' : 'drop', function () {
+            clearTimeout(timer);
+            timer = setTimeout(function () {
+                //trace:3681
+                adjustHeight.call(me);
+            }, 100);
+
+        });
+        //修复内容过多时，回到顶部，顶部内容被工具栏遮挡问题
+        var lastScrollY;
+        window.onscroll = function(){
+            if(lastScrollY === null){
+                lastScrollY = this.scrollY
+            }else if(this.scrollY == 0 && lastScrollY != 0){
+                me.window.scrollTo(0,0);
+                lastScrollY = null;
+            }
+        }
+    });
+
+
 };
+

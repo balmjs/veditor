@@ -1,36 +1,83 @@
 ///import core
 ///import uicore
-///import ui/popup.js
-///import ui/tablepicker.js
-///import ui/splitbutton.js
-(function() {
-  var utils = baidu.editor.utils,
-    Popup = baidu.editor.ui.Popup,
-    TablePicker = baidu.editor.ui.TablePicker,
-    SplitButton = baidu.editor.ui.SplitButton,
-    TableButton = (baidu.editor.ui.TableButton = function(options) {
-      this.initOptions(options);
-      this.initTableButton();
-    });
-  TableButton.prototype = {
-    initTableButton: function() {
-      var me = this;
-      this.popup = new Popup({
-        content: new TablePicker({
-          editor: me.editor,
-          onpicktable: function(t, numCols, numRows) {
-            me._onPickTable(numCols, numRows);
-          }
-        }),
-        editor: me.editor
-      });
-      this.initSplitButton();
-    },
-    _onPickTable: function(numCols, numRows) {
-      if (this.fireEvent("picktable", numCols, numRows) !== false) {
-        this.popup.hide();
-      }
-    }
-  };
-  utils.inherits(TableButton, SplitButton);
+(function (){
+    var utils = baidu.editor.utils,
+        uiUtils = baidu.editor.ui.uiUtils,
+        UIBase = baidu.editor.ui.UIBase;
+    
+    var TablePicker = baidu.editor.ui.TablePicker = function (options){
+        this.initOptions(options);
+        this.initTablePicker();
+    };
+    TablePicker.prototype = {
+        defaultNumRows: 10,
+        defaultNumCols: 10,
+        maxNumRows: 20,
+        maxNumCols: 20,
+        numRows: 10,
+        numCols: 10,
+        lengthOfCellSide: 22,
+        initTablePicker: function (){
+            this.initUIBase();
+        },
+        getHtmlTpl: function (){
+            var me = this;
+            return '<div id="##" class="edui-tablepicker %%">' +
+                 '<div class="edui-tablepicker-body">' +
+                  '<div class="edui-infoarea">' +
+                   '<span id="##_label" class="edui-label"></span>' +
+                  '</div>' +
+                  '<div class="edui-pickarea"' +
+                   ' onmousemove="$$._onMouseMove(event, this);"' +
+                   ' onmouseover="$$._onMouseOver(event, this);"' +
+                   ' onmouseout="$$._onMouseOut(event, this);"' +
+                   ' onclick="$$._onClick(event, this);"' +
+                  '>' +
+                    '<div id="##_overlay" class="edui-overlay"></div>' +
+                  '</div>' +
+                 '</div>' +
+                '</div>';
+        },
+        _UIBase_render: UIBase.prototype.render,
+        render: function (holder){
+            this._UIBase_render(holder);
+            this.getDom('label').innerHTML = '0'+this.editor.getLang("t_row")+' x 0'+this.editor.getLang("t_col");
+        },
+        _track: function (numCols, numRows){
+            var style = this.getDom('overlay').style;
+            var sideLen = this.lengthOfCellSide;
+            style.width = numCols * sideLen + 'px';
+            style.height = numRows * sideLen + 'px';
+            var label = this.getDom('label');
+            label.innerHTML = numCols +this.editor.getLang("t_col")+' x ' + numRows + this.editor.getLang("t_row");
+            this.numCols = numCols;
+            this.numRows = numRows;
+        },
+        _onMouseOver: function (evt, el){
+            var rel = evt.relatedTarget || evt.fromElement;
+            if (!uiUtils.contains(el, rel) && el !== rel) {
+                this.getDom('label').innerHTML = '0'+this.editor.getLang("t_col")+' x 0'+this.editor.getLang("t_row");
+                this.getDom('overlay').style.visibility = '';
+            }
+        },
+        _onMouseOut: function (evt, el){
+            var rel = evt.relatedTarget || evt.toElement;
+            if (!uiUtils.contains(el, rel) && el !== rel) {
+                this.getDom('label').innerHTML = '0'+this.editor.getLang("t_col")+' x 0'+this.editor.getLang("t_row");
+                this.getDom('overlay').style.visibility = 'hidden';
+            }
+        },
+        _onMouseMove: function (evt, el){
+            var style = this.getDom('overlay').style;
+            var offset = uiUtils.getEventOffset(evt);
+            var sideLen = this.lengthOfCellSide;
+            var numCols = Math.ceil(offset.left / sideLen);
+            var numRows = Math.ceil(offset.top / sideLen);
+            this._track(numCols, numRows);
+        },
+        _onClick: function (){
+            this.fireEvent('picktable', this.numCols, this.numRows);
+        }
+    };
+    utils.inherits(TablePicker, UIBase);
 })();

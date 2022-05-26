@@ -1,278 +1,258 @@
 /**
+ * 浏览器判断模块
  * @file
- * @module UE.ajax
+ * @module UE.browser
  * @since 1.2.6.1
  */
 
 /**
- * 提供对ajax请求的支持
- * @module UE.ajax
+ * 提供浏览器检测的模块
+ * @unfile
+ * @module UE.browser
  */
-UE.ajax = (function() {
-  //创建一个ajaxRequest对象
-  var fnStr = "XMLHttpRequest()";
-  try {
-    new ActiveXObject("Msxml2.XMLHTTP");
-    fnStr = "ActiveXObject('Msxml2.XMLHTTP')";
-  } catch (e) {
-    try {
-      new ActiveXObject("Microsoft.XMLHTTP");
-      fnStr = "ActiveXObject('Microsoft.XMLHTTP')";
-    } catch (e) {}
-  }
-  var creatAjaxRequest = new Function("return new " + fnStr);
+var browser = UE.browser = function(){
+    var agent = navigator.userAgent.toLowerCase(),
+        opera = window.opera,
+        browser = {
+        /**
+         * @property {boolean} ie 检测当前浏览器是否为IE
+         * @example
+         * ```javascript
+         * if ( UE.browser.ie ) {
+         *     console.log( '当前浏览器是IE' );
+         * }
+         * ```
+         */
+        ie		:  /(msie\s|trident.*rv:)([\w.]+)/.test(agent),
 
-  /**
-     * 将json参数转化成适合ajax提交的参数列表
-     * @param json
-     */
-  function json2str(json) {
-    var strArr = [];
-    for (var i in json) {
-      //忽略默认的几个参数
-      if (
-        i == "method" ||
-        i == "timeout" ||
-        i == "async" ||
-        i == "dataType" ||
-        i == "callback"
-      )
-        continue;
-      //忽略控制
-      if (json[i] == undefined || json[i] == null) continue;
-      //传递过来的对象和函数不在提交之列
-      if (
-        !(
-          (typeof json[i]).toLowerCase() == "function" ||
-          (typeof json[i]).toLowerCase() == "object"
-        )
-      ) {
-        strArr.push(encodeURIComponent(i) + "=" + encodeURIComponent(json[i]));
-      } else if (utils.isArray(json[i])) {
-        //支持传数组内容
-        for (var j = 0; j < json[i].length; j++) {
-          strArr.push(
-            encodeURIComponent(i) + "[]=" + encodeURIComponent(json[i][j])
-          );
-        }
-      }
-    }
-    return strArr.join("&");
-  }
+        /**
+         * @property {boolean} opera 检测当前浏览器是否为Opera
+         * @example
+         * ```javascript
+         * if ( UE.browser.opera ) {
+         *     console.log( '当前浏览器是Opera' );
+         * }
+         * ```
+         */
+        opera	: ( !!opera && opera.version ),
 
-  function doAjax(url, ajaxOptions) {
-    var xhr = creatAjaxRequest(),
-      //是否超时
-      timeIsOut = false,
-      //默认参数
-      defaultAjaxOptions = {
-        method: "POST",
-        timeout: 5000,
-        async: true,
-        data: {}, //需要传递对象的话只能覆盖
-        onsuccess: function() {},
-        onerror: function() {}
-      };
+        /**
+         * @property {boolean} webkit 检测当前浏览器是否是webkit内核的浏览器
+         * @example
+         * ```javascript
+         * if ( UE.browser.webkit ) {
+         *     console.log( '当前浏览器是webkit内核浏览器' );
+         * }
+         * ```
+         */
+        webkit	: ( agent.indexOf( ' applewebkit/' ) > -1 ),
 
-    if (typeof url === "object") {
-      ajaxOptions = url;
-      url = ajaxOptions.url;
-    }
-    if (!xhr || !url) return;
-    var ajaxOpts = ajaxOptions
-      ? utils.extend(defaultAjaxOptions, ajaxOptions)
-      : defaultAjaxOptions;
+        /**
+         * @property {boolean} mac 检测当前浏览器是否是运行在mac平台下
+         * @example
+         * ```javascript
+         * if ( UE.browser.mac ) {
+         *     console.log( '当前浏览器运行在mac平台下' );
+         * }
+         * ```
+         */
+        mac	: ( agent.indexOf( 'macintosh' ) > -1 ),
 
-    var submitStr = json2str(ajaxOpts); // { name:"Jim",city:"Beijing" } --> "name=Jim&city=Beijing"
-    //如果用户直接通过data参数传递json对象过来，则也要将此json对象转化为字符串
-    if (!utils.isEmptyObject(ajaxOpts.data)) {
-      submitStr += (submitStr ? "&" : "") + json2str(ajaxOpts.data);
-    }
-    //超时检测
-    var timerID = setTimeout(function() {
-      if (xhr.readyState != 4) {
-        timeIsOut = true;
-        xhr.abort();
-        clearTimeout(timerID);
-      }
-    }, ajaxOpts.timeout);
-
-    var method = ajaxOpts.method.toUpperCase();
-    var str =
-      url +
-      (url.indexOf("?") == -1 ? "?" : "&") +
-      (method == "POST" ? "" : submitStr + "&noCache=" + +new Date());
-    xhr.open(method, str, ajaxOpts.async);
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState == 4) {
-        if (!timeIsOut && xhr.status == 200) {
-          ajaxOpts.onsuccess(xhr);
-        } else {
-          ajaxOpts.onerror(xhr);
-        }
-      }
+        /**
+         * @property {boolean} quirks 检测当前浏览器是否处于“怪异模式”下
+         * @example
+         * ```javascript
+         * if ( UE.browser.quirks ) {
+         *     console.log( '当前浏览器运行处于“怪异模式”' );
+         * }
+         * ```
+         */
+        quirks : ( document.compatMode == 'BackCompat' )
     };
-    if (method == "POST") {
-      xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
-      xhr.send(submitStr);
-    } else {
-      xhr.send(null);
-    }
-  }
 
-  function doJsonp(url, opts) {
-    var successhandler = opts.onsuccess || function() {},
-      scr = document.createElement("SCRIPT"),
-      options = opts || {},
-      charset = options["charset"],
-      callbackField = options["jsonp"] || "callback",
-      callbackFnName,
-      timeOut = options["timeOut"] || 0,
-      timer,
-      reg = new RegExp("(\\?|&)" + callbackField + "=([^&]*)"),
-      matches;
+    /**
+    * @property {boolean} gecko 检测当前浏览器内核是否是gecko内核
+    * @example
+    * ```javascript
+    * if ( UE.browser.gecko ) {
+    *     console.log( '当前浏览器内核是gecko内核' );
+    * }
+    * ```
+    */
+    browser.gecko =( navigator.product == 'Gecko' && !browser.webkit && !browser.opera && !browser.ie);
 
-    if (utils.isFunction(successhandler)) {
-      callbackFnName =
-        "bd__editor__" + Math.floor(Math.random() * 2147483648).toString(36);
-      window[callbackFnName] = getCallBack(0);
-    } else if (utils.isString(successhandler)) {
-      callbackFnName = successhandler;
-    } else {
-      if ((matches = reg.exec(url))) {
-        callbackFnName = matches[2];
-      }
-    }
+    var version = 0;
 
-    url = url.replace(reg, "\x241" + callbackField + "=" + callbackFnName);
+    // Internet Explorer 6.0+
+    if ( browser.ie ){
 
-    if (url.search(reg) < 0) {
-      url +=
-        (url.indexOf("?") < 0 ? "?" : "&") +
-        callbackField +
-        "=" +
-        callbackFnName;
-    }
-
-    var queryStr = json2str(opts); // { name:"Jim",city:"Beijing" } --> "name=Jim&city=Beijing"
-    //如果用户直接通过data参数传递json对象过来，则也要将此json对象转化为字符串
-    if (!utils.isEmptyObject(opts.data)) {
-      queryStr += (queryStr ? "&" : "") + json2str(opts.data);
-    }
-    if (queryStr) {
-      url = url.replace(/\?/, "?" + queryStr + "&");
-    }
-
-    scr.onerror = getCallBack(1);
-    if (timeOut) {
-      timer = setTimeout(getCallBack(1), timeOut);
-    }
-    createScriptTag(scr, url, charset);
-
-    function createScriptTag(scr, url, charset) {
-      scr.setAttribute("type", "text/javascript");
-      scr.setAttribute("defer", "defer");
-      charset && scr.setAttribute("charset", charset);
-      scr.setAttribute("src", url);
-      document.getElementsByTagName("head")[0].appendChild(scr);
-    }
-
-    function getCallBack(onTimeOut) {
-      return function() {
-        try {
-          if (onTimeOut) {
-            options.onerror && options.onerror();
-          } else {
-            try {
-              clearTimeout(timer);
-              successhandler.apply(window, arguments);
-            } catch (e) {}
-          }
-        } catch (exception) {
-          options.onerror && options.onerror.call(window, exception);
-        } finally {
-          options.oncomplete && options.oncomplete.apply(window, arguments);
-          scr.parentNode && scr.parentNode.removeChild(scr);
-          window[callbackFnName] = null;
-          try {
-            delete window[callbackFnName];
-          } catch (e) {}
+        var v1 =  agent.match(/(?:msie\s([\w.]+))/);
+        var v2 = agent.match(/(?:trident.*rv:([\w.]+))/);
+        if(v1 && v2 && v1[1] && v2[1]){
+            version = Math.max(v1[1]*1,v2[1]*1);
+        }else if(v1 && v1[1]){
+            version = v1[1]*1;
+        }else if(v2 && v2[1]){
+            version = v2[1]*1;
+        }else{
+            version = 0;
         }
-      };
-    }
-  }
 
-  return {
-    /**
-         * 根据给定的参数项，向指定的url发起一个ajax请求。 ajax请求完成后，会根据请求结果调用相应回调： 如果请求
-         * 成功， 则调用onsuccess回调， 失败则调用 onerror 回调
-         * @method request
-         * @param { URLString } url ajax请求的url地址
-         * @param { Object } ajaxOptions ajax请求选项的键值对，支持的选项如下：
+        browser.ie11Compat = document.documentMode == 11;
+        /**
+         * @property { boolean } ie9Compat 检测浏览器模式是否为 IE9 兼容模式
+         * @warning 如果浏览器不是IE， 则该值为undefined
          * @example
          * ```javascript
-         * //向sayhello.php发起一个异步的Ajax GET请求, 请求超时时间为10s， 请求完成后执行相应的回调。
-         * UE.ajax.requeset( 'sayhello.php', {
-         *
-         *     //请求方法。可选值： 'GET', 'POST'，默认值是'POST'
-         *     method: 'GET',
-         *
-         *     //超时时间。 默认为5000， 单位是ms
-         *     timeout: 10000,
-         *
-         *     //是否是异步请求。 true为异步请求， false为同步请求
-         *     async: true,
-         *
-         *     //请求携带的数据。如果请求为GET请求， data会经过stringify后附加到请求url之后。
-         *     data: {
-         *         name: 'ueditor'
-         *     },
-         *
-         *     //请求成功后的回调， 该回调接受当前的XMLHttpRequest对象作为参数。
-         *     onsuccess: function ( xhr ) {
-         *         console.log( xhr.responseText );
-         *     },
-         *
-         *     //请求失败或者超时后的回调。
-         *     onerror: function ( xhr ) {
-         *          alert( 'Ajax请求失败' );
-         *     }
-         *
-         * } );
+         * if ( UE.browser.ie9Compat ) {
+         *     console.log( '当前浏览器运行在IE9兼容模式下' );
+         * }
          * ```
          */
+        browser.ie9Compat = document.documentMode == 9;
 
-    /**
-         * 根据给定的参数项发起一个ajax请求， 参数项里必须包含一个url地址。 ajax请求完成后，会根据请求结果调用相应回调： 如果请求
-         * 成功， 则调用onsuccess回调， 失败则调用 onerror 回调。
-         * @method request
-         * @warning 如果在参数项里未提供一个key为“url”的地址值，则该请求将直接退出。
-         * @param { Object } ajaxOptions ajax请求选项的键值对，支持的选项如下：
+        /**
+         * @property { boolean } ie8 检测浏览器是否是IE8浏览器
+         * @warning 如果浏览器不是IE， 则该值为undefined
          * @example
          * ```javascript
-         *
-         * //向sayhello.php发起一个异步的Ajax POST请求, 请求超时时间为5s， 请求完成后不执行任何回调。
-         * UE.ajax.requeset( 'sayhello.php', {
-         *
-         *     //请求的地址， 该项是必须的。
-         *     url: 'sayhello.php'
-         *
-         * } );
+         * if ( UE.browser.ie8 ) {
+         *     console.log( '当前浏览器是IE8浏览器' );
+         * }
          * ```
          */
-    request: function(url, opts) {
-      if (opts && opts.dataType == "jsonp") {
-        doJsonp(url, opts);
-      } else {
-        doAjax(url, opts);
-      }
-    },
-    getJSONP: function(url, data, fn) {
-      var opts = {
-        data: data,
-        oncomplete: fn
-      };
-      doJsonp(url, opts);
+        browser.ie8 = !!document.documentMode;
+
+        /**
+         * @property { boolean } ie8Compat 检测浏览器模式是否为 IE8 兼容模式
+         * @warning 如果浏览器不是IE， 则该值为undefined
+         * @example
+         * ```javascript
+         * if ( UE.browser.ie8Compat ) {
+         *     console.log( '当前浏览器运行在IE8兼容模式下' );
+         * }
+         * ```
+         */
+        browser.ie8Compat = document.documentMode == 8;
+
+        /**
+         * @property { boolean } ie7Compat 检测浏览器模式是否为 IE7 兼容模式
+         * @warning 如果浏览器不是IE， 则该值为undefined
+         * @example
+         * ```javascript
+         * if ( UE.browser.ie7Compat ) {
+         *     console.log( '当前浏览器运行在IE7兼容模式下' );
+         * }
+         * ```
+         */
+        browser.ie7Compat = ( ( version == 7 && !document.documentMode )
+                || document.documentMode == 7 );
+
+        /**
+         * @property { boolean } ie6Compat 检测浏览器模式是否为 IE6 模式 或者怪异模式
+         * @warning 如果浏览器不是IE， 则该值为undefined
+         * @example
+         * ```javascript
+         * if ( UE.browser.ie6Compat ) {
+         *     console.log( '当前浏览器运行在IE6模式或者怪异模式下' );
+         * }
+         * ```
+         */
+        browser.ie6Compat = ( version < 7 || browser.quirks );
+
+        browser.ie9above = version > 8;
+
+        browser.ie9below = version < 9;
+
+        browser.ie11above = version > 10;
+
+        browser.ie11below = version < 11;
+
     }
-  };
-})();
+
+    // Gecko.
+    if ( browser.gecko ){
+        var geckoRelease = agent.match( /rv:([\d\.]+)/ );
+        if ( geckoRelease )
+        {
+            geckoRelease = geckoRelease[1].split( '.' );
+            version = geckoRelease[0] * 10000 + ( geckoRelease[1] || 0 ) * 100 + ( geckoRelease[2] || 0 ) * 1;
+        }
+    }
+
+    /**
+     * @property { Number } chrome 检测当前浏览器是否为Chrome, 如果是，则返回Chrome的大版本号
+     * @warning 如果浏览器不是chrome， 则该值为undefined
+     * @example
+     * ```javascript
+     * if ( UE.browser.chrome ) {
+     *     console.log( '当前浏览器是Chrome' );
+     * }
+     * ```
+     */
+    if (/chrome\/(\d+\.\d)/i.test(agent)) {
+        browser.chrome = + RegExp['\x241'];
+    }
+
+    /**
+     * @property { Number } safari 检测当前浏览器是否为Safari, 如果是，则返回Safari的大版本号
+     * @warning 如果浏览器不是safari， 则该值为undefined
+     * @example
+     * ```javascript
+     * if ( UE.browser.safari ) {
+     *     console.log( '当前浏览器是Safari' );
+     * }
+     * ```
+     */
+    if(/(\d+\.\d)?(?:\.\d)?\s+safari\/?(\d+\.\d+)?/i.test(agent) && !/chrome/i.test(agent)){
+    	browser.safari = + (RegExp['\x241'] || RegExp['\x242']);
+    }
+
+
+    // Opera 9.50+
+    if ( browser.opera )
+        version = parseFloat( opera.version() );
+
+    // WebKit 522+ (Safari 3+)
+    if ( browser.webkit )
+        version = parseFloat( agent.match( / applewebkit\/(\d+)/ )[1] );
+
+    /**
+     * @property { Number } version 检测当前浏览器版本号
+     * @remind
+     * <ul>
+     *     <li>IE系列返回值为5,6,7,8,9,10等</li>
+     *     <li>gecko系列会返回10900，158900等</li>
+     *     <li>webkit系列会返回其build号 (如 522等)</li>
+     * </ul>
+     * @example
+     * ```javascript
+     * console.log( '当前浏览器版本号是： ' + UE.browser.version );
+     * ```
+     */
+    browser.version = version;
+
+    /**
+     * @property { boolean } isCompatible 检测当前浏览器是否能够与UEditor良好兼容
+     * @example
+     * ```javascript
+     * if ( UE.browser.isCompatible ) {
+     *     console.log( '浏览器与UEditor能够良好兼容' );
+     * }
+     * ```
+     */
+    browser.isCompatible =
+        !browser.mobile && (
+        ( browser.ie && version >= 6 ) ||
+        ( browser.gecko && version >= 10801 ) ||
+        ( browser.opera && version >= 9.5 ) ||
+        ( browser.air && version >= 1 ) ||
+        ( browser.webkit && version >= 522 ) ||
+        false );
+    return browser;
+}();
+//快捷方式
+var ie = browser.ie,
+    webkit = browser.webkit,
+    gecko = browser.gecko,
+    opera = browser.opera;
