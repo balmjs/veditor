@@ -3,7 +3,7 @@ module.exports = function (api) {
     ? {
         modules: false,
         useBuiltIns: 'usage',
-        corejs: { version: '3.19', proposals: true }
+        corejs: { version: '3.22', proposals: true }
       }
     : {};
   let runtimeOptions = api.env('production') ? { corejs: 3 } : {};
@@ -17,6 +17,7 @@ module.exports = function (api) {
         {
           languages: [
             'markup',
+            'ini',
             'css',
             'javascript',
             'bash',

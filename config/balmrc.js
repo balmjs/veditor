@@ -38,9 +38,9 @@ function getConfig(balm) {
         esModule: false
       },
       alias: {
-        '@': resolve('docs/scripts'),
         vue$: 'vue/dist/vue.esm.js',
-        'balm-ui-plus': 'balm-ui/dist/balm-ui-plus.js'
+        'balm-ui-plus': 'balm-ui/dist/balm-ui-plus.js',
+        '@': resolve('docs/scripts')
       },
       plugins: [new VueLoaderPlugin()]
     },
