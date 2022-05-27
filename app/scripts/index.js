@@ -1,6 +1,8 @@
 import Vue from 'vue';
 import App from '@/views/layout/app';
-import utils from './editor/core/utils/index';
+import dtd from './editor/core/dtd';
+
+console.log(dtd);
 
 new Vue({
   el: '#app',
