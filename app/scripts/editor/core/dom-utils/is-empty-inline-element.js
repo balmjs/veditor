@@ -35,3 +35,5 @@ const isEmptyInlineElement = function (node) {
   }
   return 1;
 };
+
+export default isEmptyInlineElement;
