@@ -85,12 +85,12 @@ const browser = (function () {
     !browser.opera &&
     !browser.ie;
 
-  var version = 0;
+  let version = 0;
 
   // Internet Explorer 6.0+
   if (browser.ie) {
-    var v1 = agent.match(/(?:msie\s([\w.]+))/);
-    var v2 = agent.match(/(?:trident.*rv:([\w.]+))/);
+    let v1 = agent.match(/(?:msie\s([\w.]+))/);
+    let v2 = agent.match(/(?:trident.*rv:([\w.]+))/);
     if (v1 && v2 && v1[1] && v2[1]) {
       version = Math.max(v1[1] * 1, v2[1] * 1);
     } else if (v1 && v1[1]) {
@@ -174,7 +174,7 @@ const browser = (function () {
 
   // Gecko.
   if (browser.gecko) {
-    var geckoRelease = agent.match(/rv:([\d\.]+)/);
+    let geckoRelease = agent.match(/rv:([\d\.]+)/);
     if (geckoRelease) {
       geckoRelease = geckoRelease[1].split('.');
       version =

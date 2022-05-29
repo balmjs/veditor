@@ -29,7 +29,7 @@ export default (function () {
    * @param json
    */
   const json2str = function (json) {
-    var strArr = [];
+    let strArr = [];
     for (let i in json) {
       //忽略默认的几个参数
       if (
@@ -156,7 +156,7 @@ export default (function () {
         callbackFnName;
     }
 
-    var queryStr = json2str(opts); // { name:"Jim",city:"Beijing" } --> "name=Jim&city=Beijing"
+    let queryStr = json2str(opts); // { name:"Jim",city:"Beijing" } --> "name=Jim&city=Beijing"
     //如果用户直接通过data参数传递json对象过来，则也要将此json对象转化为字符串
     if (!utils.isEmptyObject(opts.data)) {
       queryStr += (queryStr ? '&' : '') + json2str(opts.data);

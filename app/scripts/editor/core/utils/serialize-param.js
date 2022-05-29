@@ -1,7 +1,7 @@
 import types from './types';
 
 export default function (json) {
-  var strArr = [];
+  let strArr = [];
   for (let i in json) {
     //忽略默认的几个参数
     if (i == 'method' || i == 'timeout' || i == 'async') continue;

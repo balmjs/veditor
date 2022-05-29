@@ -177,10 +177,9 @@ export default class EventBase {
    */
   fireEvent() {
     let types = arguments[0];
-    types = utils.trim(types).split(' ');
+    (types = utils.trim(types).split(' ')), r;
     for (let i = 0, ti; (ti = types[i++]); ) {
       let listeners = getListener(this, ti),
-        r,
         t,
         k;
       if (listeners) {
