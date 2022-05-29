@@ -1,3 +1,5 @@
+import attrFix from './attr-fix';
+
 /**
  * 为节点node添加属性attrs，attrs为属性键值对
  * @method setAttributes

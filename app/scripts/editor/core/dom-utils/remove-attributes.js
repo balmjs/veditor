@@ -1,6 +1,8 @@
 import utils from '../utils';
 import browser from '../browser';
 
+import attrFix from './attr-fix';
+
 /**
  * 删除节点node上的指定属性名称的属性
  * @method  removeAttributes

@@ -1,5 +1,6 @@
 import domUtils from '../dom-utils';
 import browser from '../browser';
+import fillData from './fill-data';
 
 /**
  * 删除fillData

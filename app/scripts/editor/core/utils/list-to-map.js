@@ -32,7 +32,8 @@ import types from './types';
 export default function (list) {
   if (!list) return {};
   list = types.isArray(list) ? list : list.split(',');
-  for (let i = 0, ci, obj = {}; (ci = list[i++]); ) {
+  let obj = {};
+  for (let i = 0, ci; (ci = list[i++]); ) {
     obj[ci.toUpperCase()] = obj[ci] = 1;
   }
   return obj;

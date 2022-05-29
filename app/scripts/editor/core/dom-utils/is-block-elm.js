@@ -1,5 +1,6 @@
 import dtd from '../dtd';
 import getComputedStyle from './get-computed-style';
+import styleBlock from './style-block';
 
 /**
  * 检查节点node是否为block元素
