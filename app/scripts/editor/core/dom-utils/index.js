@@ -65,6 +65,10 @@ import isInNodeEndBoundary from './is-in-node-end-boundary';
 import isBoundaryNode from './is-boundary-node';
 import fillHtml from './fill-html';
 
+import reg from './fill-char-reg';
+
+export const fillCharReg = reg;
+
 export default {
   ...constants,
   fillChar,
